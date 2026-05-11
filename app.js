@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
   bindTemplateSelector();
   bindSkillInput();
   bindHeaderActions();
+  bindATS();
+  bindThemeToggle();
+  bindAutoSuggestions();
 });
 
 // ==================== HYDRATE FORM FROM STATE ====================
@@ -114,11 +117,7 @@ function bindSkillInput() {
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && input.value.trim()) {
       e.preventDefault();
-      state.skills.push(input.value.trim());
-      input.value = '';
-      saveState();
-      renderSkillTags();
-      renderPreview();
+      addSkillFromInput(input);
     }
   });
 }
@@ -360,11 +359,11 @@ function renderPreview() {
 
   // Header
   const contactParts = [];
-  if (s.email) contactParts.push(`<a href="mailto:${esc(s.email)}" style="color:#000;text-decoration:none;">${esc(s.email)}</a>`);
-  if (s.phone) contactParts.push(`<span>${esc(s.phone)}</span>`);
-  if (s.location) contactParts.push(`<span>${esc(s.location)}</span>`);
-  if (s.website) contactParts.push(`<a href="${esc(s.website)}" target="_blank" style="color:#000;text-decoration:none;">${esc(s.website.replace(/^https?:\/\//, ''))}</a>`);
-  if (s.github) contactParts.push(`<a href="${esc(s.github)}" target="_blank" style="color:#000;text-decoration:none;">GitHub: ${esc(s.github.replace(/^https?:\/\//, ''))}</a>`);
+  if (s.email) contactParts.push(`<a href="mailto:${esc(s.email)}" style="color:#000;text-decoration:none;"><i class="fa-solid fa-envelope" style="margin-right:4px;"></i>${esc(s.email)}</a>`);
+  if (s.phone) contactParts.push(`<span><i class="fa-solid fa-phone" style="margin-right:4px;"></i>${esc(s.phone)}</span>`);
+  if (s.location) contactParts.push(`<span><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>${esc(s.location)}</span>`);
+  if (s.website) contactParts.push(`<a href="${esc(s.website)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-linkedin" style="margin-right:4px;"></i>${esc(s.website.replace(/^https?:\/\//, ''))}</a>`);
+  if (s.github) contactParts.push(`<a href="${esc(s.github)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-github" style="margin-right:4px;"></i>${esc(s.github.replace(/^https?:\/\//, ''))}</a>`);
 
   html += `<div class="resume-header">
     <div>
@@ -503,6 +502,176 @@ function bindHeaderActions() {
     reader.readAsText(file);
     e.target.value = '';
   });
+}
+
+// ==================== DARK/LIGHT RESUME THEME ====================
+let resumeDark = false;
+function bindThemeToggle() {
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    resumeDark = !resumeDark;
+    const page = document.getElementById('resume-page');
+    const btn = document.getElementById('btn-theme');
+    page.classList.toggle('resume-dark', resumeDark);
+    btn.textContent = resumeDark ? '☀️ Light Resume' : '🌙 Dark Resume';
+  });
+}
+
+// ==================== ATS SCORE CHECKER ====================
+function bindATS() {
+  const modal = document.getElementById('ats-modal');
+  document.getElementById('btn-ats').addEventListener('click', () => modal.classList.add('active'));
+  document.getElementById('ats-close').addEventListener('click', () => modal.classList.remove('active'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
+
+  document.getElementById('ats-analyze').addEventListener('click', () => {
+    const jd = document.getElementById('ats-jd').value;
+    if (!jd.trim()) { showToast('Please paste a job description'); return; }
+    analyzeATS(jd);
+  });
+}
+
+function analyzeATS(jobDescription) {
+  const stopWords = new Set(['the','a','an','and','or','but','in','on','at','to','for','of','with','by','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','can','could','this','that','these','those','i','you','we','they','he','she','it','my','your','our','their','his','her','its','me','us','them','who','what','which','when','where','how','not','no','all','each','every','both','few','more','most','other','some','such','than','too','very','just','about','above','after','again','also','any','because','before','between','come','from','get','into','make','over','same','take','through','under','up','work','year','years','etc','including','strong','experience','ability','knowledge','understanding','working','using','must','required','preferred','plus','well','good','great','team','role','position','job','responsibilities','requirements','qualifications','skills','looking','join','apply','company','based','new','like','one','two','per']);
+
+  // Extract keywords from JD
+  const jdWords = jobDescription.toLowerCase().replace(/[^a-z0-9+#.\s-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  const jdKeywords = [...new Set(jdWords)];
+
+  // Get all resume text
+  const resumeText = getResumeText().toLowerCase();
+
+  // Check matches
+  const matched = [];
+  const missing = [];
+  jdKeywords.forEach(kw => {
+    if (resumeText.includes(kw)) matched.push(kw);
+    else missing.push(kw);
+  });
+
+  const score = jdKeywords.length > 0 ? Math.round((matched.length / jdKeywords.length) * 100) : 0;
+  renderATSResults(score, matched, missing);
+}
+
+function getResumeText() {
+  const s = state;
+  let text = [s.fullName, s.jobTitle, s.email, s.phone, s.location, s.website, s.github, s.summary].join(' ');
+  text += ' ' + s.skills.join(' ');
+  s.experience.forEach(e => text += ` ${e.title} ${e.company} ${e.location} ${e.description}`);
+  s.education.forEach(e => text += ` ${e.degree} ${e.institution} ${e.details}`);
+  s.projects.forEach(p => text += ` ${p.name} ${p.description}`);
+  s.certifications.forEach(c => text += ` ${c.name} ${c.issuer}`);
+  return text;
+}
+
+function renderATSResults(score, matched, missing) {
+  const circumference = 2 * Math.PI * 52;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
+  const label = score >= 70 ? 'Great match! Your resume aligns well.' : score >= 40 ? 'Decent match. Consider adding missing keywords.' : 'Low match. Add more relevant keywords from the JD.';
+
+  let html = `
+    <div class="ats-score-ring">
+      <svg><circle class="ring-bg" cx="60" cy="60" r="52" stroke-dasharray="${circumference}" />
+      <circle class="ring-fill" cx="60" cy="60" r="52" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" style="stroke:${color}" /></svg>
+      <span class="ats-score-text" style="-webkit-text-fill-color:${color};background:none;">${score}%</span>
+    </div>
+    <div class="ats-label">${label}</div>`;
+
+  if (matched.length) {
+    html += `<div class="ats-section-label">✅ Matched Keywords (${matched.length})</div>
+      <div class="ats-keywords">${matched.map(k => `<span class="ats-keyword matched">${k}</span>`).join('')}</div>`;
+  }
+  if (missing.length) {
+    html += `<div class="ats-section-label">❌ Missing Keywords (${missing.length})</div>
+      <div class="ats-keywords">${missing.slice(0, 30).map(k => `<span class="ats-keyword missing">${k}</span>`).join('')}</div>`;
+  }
+
+  document.getElementById('ats-results').innerHTML = html;
+}
+
+// ==================== AUTO-SUGGESTIONS ====================
+const skillsDatabase = {
+  'software': ['JavaScript','Python','Java','C++','React','Node.js','SQL','Git','Docker','AWS','TypeScript','REST APIs','MongoDB','PostgreSQL','Redis','Kubernetes','CI/CD','Agile','Scrum','Linux'],
+  'web': ['HTML','CSS','JavaScript','React','Vue.js','Angular','Node.js','TypeScript','REST APIs','GraphQL','Sass','Tailwind CSS','Next.js','Webpack','Responsive Design','SEO','Figma','UI/UX'],
+  'data': ['Python','SQL','Pandas','NumPy','Machine Learning','TensorFlow','PyTorch','Tableau','Power BI','R','Spark','Hadoop','Statistics','Data Visualization','ETL','Scikit-learn','Deep Learning','NLP'],
+  'ai': ['Python','TensorFlow','PyTorch','Machine Learning','Deep Learning','NLP','Computer Vision','Scikit-learn','Keras','OpenCV','Pandas','NumPy','Reinforcement Learning','GANs','Transformers','LLMs','MLOps'],
+  'design': ['Figma','Adobe XD','Photoshop','Illustrator','Sketch','UI Design','UX Design','Wireframing','Prototyping','User Research','Design Systems','Typography','Color Theory','Responsive Design','Accessibility'],
+  'mobile': ['React Native','Flutter','Swift','Kotlin','iOS','Android','Dart','Xcode','Firebase','REST APIs','SQLite','UI/UX','App Store','Google Play','Push Notifications'],
+  'devops': ['Docker','Kubernetes','AWS','Azure','GCP','CI/CD','Jenkins','Terraform','Ansible','Linux','Bash','Monitoring','Prometheus','Grafana','Nginx','Networking'],
+  'marketing': ['SEO','Google Analytics','Content Marketing','Social Media','Email Marketing','PPC','Google Ads','Facebook Ads','Copywriting','A/B Testing','HubSpot','Mailchimp','Branding','Market Research'],
+  'project': ['Agile','Scrum','Kanban','Jira','Confluence','Risk Management','Stakeholder Management','Budgeting','MS Project','Leadership','Communication','Problem Solving','Critical Thinking'],
+  'general': ['Communication','Teamwork','Problem Solving','Leadership','Time Management','Critical Thinking','Adaptability','Creativity','Collaboration','Presentation','Project Management','Analytical Skills']
+};
+
+function bindAutoSuggestions() {
+  const input = document.getElementById('skillInput');
+  const dropdown = document.getElementById('suggestions-dropdown');
+
+  input.addEventListener('input', () => {
+    const val = input.value.trim().toLowerCase();
+    if (val.length < 1) { dropdown.classList.remove('active'); return; }
+
+    const allSuggestions = getSuggestedSkills();
+    const filtered = allSuggestions.filter(s =>
+      s.toLowerCase().includes(val) && !state.skills.includes(s)
+    ).slice(0, 8);
+
+    if (filtered.length === 0) { dropdown.classList.remove('active'); return; }
+
+    dropdown.innerHTML = filtered.map(s =>
+      `<div class="suggestion-item" data-skill="${esc(s)}">${esc(s)}</div>`
+    ).join('');
+    dropdown.classList.add('active');
+
+    dropdown.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        state.skills.push(item.dataset.skill);
+        input.value = '';
+        dropdown.classList.remove('active');
+        saveState();
+        renderSkillTags();
+        renderPreview();
+      });
+    });
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => dropdown.classList.remove('active'), 200);
+  });
+}
+
+function getSuggestedSkills() {
+  const title = (state.jobTitle || '').toLowerCase();
+  let pool = [...skillsDatabase.general];
+
+  Object.entries(skillsDatabase).forEach(([key, skills]) => {
+    if (key !== 'general' && title.includes(key)) pool = [...skills, ...pool];
+  });
+
+  // Also match specific keywords
+  if (title.includes('frontend') || title.includes('front-end') || title.includes('front end')) pool = [...skillsDatabase.web, ...pool];
+  if (title.includes('backend') || title.includes('back-end') || title.includes('back end')) pool = [...skillsDatabase.software, ...pool];
+  if (title.includes('full stack') || title.includes('fullstack')) pool = [...skillsDatabase.web, ...skillsDatabase.software, ...pool];
+  if (title.includes('engineer') || title.includes('developer')) pool = [...skillsDatabase.software, ...pool];
+  if (title.includes('scientist') || title.includes('analyst')) pool = [...skillsDatabase.data, ...pool];
+  if (title.includes('machine learning') || title.includes('ml ')) pool = [...skillsDatabase.ai, ...pool];
+  if (title.includes('designer') || title.includes('ux') || title.includes('ui')) pool = [...skillsDatabase.design, ...pool];
+  if (title.includes('mobile') || title.includes('ios') || title.includes('android')) pool = [...skillsDatabase.mobile, ...pool];
+  if (title.includes('devops') || title.includes('cloud') || title.includes('sre')) pool = [...skillsDatabase.devops, ...pool];
+  if (title.includes('manager') || title.includes('lead')) pool = [...skillsDatabase.project, ...pool];
+
+  return [...new Set(pool)];
+}
+
+function addSkillFromInput(input) {
+  const val = input.value.trim();
+  if (!val) return;
+  state.skills.push(val);
+  input.value = '';
+  document.getElementById('suggestions-dropdown').classList.remove('active');
+  saveState();
+  renderSkillTags();
+  renderPreview();
 }
 
 // ==================== MOBILE TOGGLE ====================

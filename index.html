@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ResumeForge — Build Your Professional Resume</title>
   <meta name="description" content="Create a stunning professional resume with live preview, multiple templates, and PDF download — all in your browser." />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="index.css" />
 </head>
 <body>
@@ -17,10 +19,12 @@
   <!-- Header -->
   <header class="app-header">
     <div class="logo">
-      <div class="logo-icon">📄</div>
+      <div class="logo-icon"><img src="favicon.png" alt="R" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" /></div>
       <span>Resume<span style="background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Forge</span></span>
     </div>
     <div class="header-actions">
+      <button class="btn btn-secondary" id="btn-ats" title="ATS Score Checker">📊 ATS Check</button>
+      <button class="btn btn-secondary" id="btn-theme" title="Toggle Resume Theme">🌙 Dark Resume</button>
       <button class="btn btn-secondary" id="btn-import" title="Import JSON">⬆ Import</button>
       <button class="btn btn-secondary" id="btn-export" title="Export JSON">⬇ Export</button>
       <button class="btn btn-primary" id="btn-download" title="Download PDF">🖨 Download PDF</button>
@@ -39,6 +43,13 @@
         <button class="template-btn active" data-template="modern">✦ Modern</button>
         <button class="template-btn" data-template="classic">◆ Classic</button>
         <button class="template-btn" data-template="minimal">○ Minimal</button>
+        <button class="template-btn" data-template="executive">■ Executive</button>
+        <button class="template-btn" data-template="elegant">❖ Elegant</button>
+        <button class="template-btn" data-template="creative">✿ Creative</button>
+        <button class="template-btn" data-template="tech">⌘ Tech</button>
+        <button class="template-btn" data-template="compact">▪ Compact</button>
+        <button class="template-btn" data-template="professional">◈ Professional</button>
+        <button class="template-btn" data-template="bold">▌Bold</button>
       </div>
 
       <!-- Personal Info -->
@@ -128,9 +139,10 @@
           <span class="section-toggle">▾</span>
         </div>
         <div class="section-body">
-          <div class="form-group">
+          <div class="form-group" style="position:relative;">
             <label for="skillInput">Add a skill and press Enter</label>
-            <input type="text" id="skillInput" placeholder="e.g. JavaScript" />
+            <input type="text" id="skillInput" placeholder="e.g. JavaScript" autocomplete="off" />
+            <div class="suggestions-dropdown" id="suggestions-dropdown"></div>
           </div>
           <div class="skills-container" id="skills-container"></div>
         </div>
@@ -176,6 +188,24 @@
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
+
+  <!-- ATS Modal -->
+  <div class="modal-overlay" id="ats-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>📊 ATS Score Checker</h2>
+        <button class="modal-close" id="ats-close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Paste the Job Description</label>
+          <textarea id="ats-jd" rows="6" placeholder="Paste the full job description here..."></textarea>
+        </div>
+        <button class="btn btn-primary" id="ats-analyze" style="width:100;">🔍 Analyze Match</button>
+        <div id="ats-results" class="ats-results"></div>
+      </div>
+    </div>
+  </div>
 
   <!-- About Section -->
   <footer class="about-section" id="about">
