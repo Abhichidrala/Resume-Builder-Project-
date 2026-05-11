@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResumeForge — Build Your Professional Resume</title>
+  <meta name="description" content="Create a stunning professional resume with live preview, multiple templates, and PDF download — all in your browser." />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="bg-mesh">
+    <div class="orb"></div><div class="orb"></div><div class="orb"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">
+      <div class="logo-icon">📄</div>
+      <span>Resume<span style="background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Forge</span></span>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" id="btn-import" title="Import JSON">⬆ Import</button>
+      <button class="btn btn-secondary" id="btn-export" title="Export JSON">⬇ Export</button>
+      <button class="btn btn-primary" id="btn-download" title="Download PDF">🖨 Download PDF</button>
+      <input type="file" id="file-import" class="file-input-hidden" accept=".json" />
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <main class="app-container">
+
+    <!-- ===== EDITOR PANEL ===== -->
+    <aside class="editor-panel" id="editor-panel">
+
+      <!-- Template Selector -->
+      <div class="template-selector">
+        <button class="template-btn active" data-template="modern">✦ Modern</button>
+        <button class="template-btn" data-template="classic">◆ Classic</button>
+        <button class="template-btn" data-template="minimal">○ Minimal</button>
+      </div>
+
+      <!-- Personal Info -->
+      <div class="form-section open" id="sec-personal">
+        <div class="section-header" onclick="toggleSection('sec-personal')">
+          <h3><span class="icon">👤</span> Personal Info</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="John Doe" data-field="fullName" />
+          </div>
+          <div class="form-group">
+            <label for="jobTitle">Job Title</label>
+            <input type="text" id="jobTitle" placeholder="Senior Software Engineer" data-field="jobTitle" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" placeholder="john@example.com" data-field="email" />
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone</label>
+              <input type="tel" id="phone" placeholder="+1 (555) 000-0000" data-field="phone" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="location">Location</label>
+              <input type="text" id="location" placeholder="San Francisco, CA" data-field="location" />
+            </div>
+            <div class="form-group">
+              <label for="website">Website / LinkedIn</label>
+              <input type="url" id="website" placeholder="https://linkedin.com/in/john" data-field="website" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="github">GitHub</label>
+            <input type="url" id="github" placeholder="https://github.com/username" data-field="github" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="form-section open" id="sec-summary">
+        <div class="section-header" onclick="toggleSection('sec-summary')">
+          <h3><span class="icon">📝</span> Summary</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="summary">Professional Summary</label>
+            <textarea id="summary" rows="4" placeholder="Brief overview of your experience and goals..." data-field="summary"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Experience -->
+      <div class="form-section open" id="sec-experience">
+        <div class="section-header" onclick="toggleSection('sec-experience')">
+          <h3><span class="icon">💼</span> Experience</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div id="experience-list"></div>
+          <button class="add-item-btn" onclick="addExperience()">+ Add Experience</button>
+        </div>
+      </div>
+
+      <!-- Education -->
+      <div class="form-section open" id="sec-education">
+        <div class="section-header" onclick="toggleSection('sec-education')">
+          <h3><span class="icon">🎓</span> Education</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div id="education-list"></div>
+          <button class="add-item-btn" onclick="addEducation()">+ Add Education</button>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="form-section open" id="sec-skills">
+        <div class="section-header" onclick="toggleSection('sec-skills')">
+          <h3><span class="icon">🛠</span> Skills</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div class="form-group">
+            <label for="skillInput">Add a skill and press Enter</label>
+            <input type="text" id="skillInput" placeholder="e.g. JavaScript" />
+          </div>
+          <div class="skills-container" id="skills-container"></div>
+        </div>
+      </div>
+
+      <!-- Projects -->
+      <div class="form-section" id="sec-projects">
+        <div class="section-header" onclick="toggleSection('sec-projects')">
+          <h3><span class="icon">🚀</span> Projects</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div id="projects-list"></div>
+          <button class="add-item-btn" onclick="addProject()">+ Add Project</button>
+        </div>
+      </div>
+
+      <!-- Certifications -->
+      <div class="form-section" id="sec-certifications">
+        <div class="section-header" onclick="toggleSection('sec-certifications')">
+          <h3><span class="icon">🏅</span> Certifications</h3>
+          <span class="section-toggle">▾</span>
+        </div>
+        <div class="section-body">
+          <div id="certifications-list"></div>
+          <button class="add-item-btn" onclick="addCertification()">+ Add Certification</button>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ===== PREVIEW PANEL ===== -->
+    <section class="preview-panel" id="preview-panel">
+      <div class="resume-page template-modern" id="resume-page">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Mobile Toggle -->
+  <button class="mobile-toggle" id="mobile-toggle" onclick="toggleMobileView()">👁 Preview</button>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
