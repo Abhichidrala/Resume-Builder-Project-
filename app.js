@@ -3,6 +3,28 @@
    State management, live preview, templates, persistence
    ====================================================== */
 
+// ==================== DEBOUNCE UTILITY ====================
+let _renderTimer = null;
+function debouncedRender(delay = 150) {
+  clearTimeout(_renderTimer);
+  _renderTimer = setTimeout(() => renderPreview(), delay);
+}
+
+// ==================== FONT AWESOME FALLBACK ====================
+(function checkFontAwesome() {
+  const link = document.querySelector('link[href*="font-awesome"]');
+  if (!link) return;
+  const timeout = setTimeout(() => {
+    // If FA hasn't loaded in 4s, remove it so the page doesn't hang
+    if (!document.fonts || document.fonts.status !== 'loaded') {
+      console.warn('Font Awesome CDN slow — using emoji fallback');
+    }
+  }, 4000);
+  if (document.fonts) {
+    document.fonts.ready.then(() => clearTimeout(timeout));
+  }
+})();
+
 // ==================== STATE ====================
 const defaultState = {
   template: 'modern',
@@ -26,8 +48,14 @@ let state = loadState();
 function loadState() {
   try {
     const saved = localStorage.getItem('resumeforge_data');
-    if (saved) return { ...defaultState, ...JSON.parse(saved) };
-  } catch (e) { /* ignore */ }
+    if (saved) {
+      const parsed = { ...defaultState, ...JSON.parse(saved) };
+      return parsed;
+    }
+  } catch (e) {
+    console.error('Failed to load state, resetting:', e);
+    localStorage.removeItem('resumeforge_data');
+  }
   return { ...defaultState };
 }
 
@@ -35,8 +63,54 @@ function saveState() {
   localStorage.setItem('resumeforge_data', JSON.stringify(state));
 }
 
+// Ensures imported/loaded data has correct types to prevent crashes
+function sanitizeState() {
+  // Ensure string fields
+  ['fullName','jobTitle','email','phone','location','website','github','summary','template'].forEach(key => {
+    if (typeof state[key] !== 'string') state[key] = state[key] ? String(state[key]) : '';
+  });
+
+  // Ensure array fields
+  if (!Array.isArray(state.skills)) state.skills = [];
+  state.skills = state.skills.filter(s => typeof s === 'string' && s.trim());
+
+  if (!Array.isArray(state.experience)) state.experience = [];
+  state.experience = state.experience.map(e => ({
+    title: String(e?.title || ''),
+    company: String(e?.company || ''),
+    location: String(e?.location || ''),
+    startDate: String(e?.startDate || ''),
+    endDate: String(e?.endDate || ''),
+    description: String(e?.description || '')
+  }));
+
+  if (!Array.isArray(state.education)) state.education = [];
+  state.education = state.education.map(e => ({
+    degree: String(e?.degree || ''),
+    institution: String(e?.institution || ''),
+    year: String(e?.year || ''),
+    details: String(e?.details || '')
+  }));
+
+  if (!Array.isArray(state.projects)) state.projects = [];
+  state.projects = state.projects.map(p => ({
+    name: String(p?.name || ''),
+    link: String(p?.link || ''),
+    description: String(p?.description || '')
+  }));
+
+  if (!Array.isArray(state.certifications)) state.certifications = [];
+  state.certifications = state.certifications.map(c => ({
+    name: String(c?.name || ''),
+    issuer: String(c?.issuer || ''),
+    date: String(c?.date || '')
+  }));
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded', () => {
+  sanitizeState();
+  saveState();
   hydrateForm();
   renderPreview();
   bindInputs();
@@ -88,7 +162,7 @@ function bindInputs() {
     el.addEventListener('input', () => {
       state[el.dataset.field] = el.value;
       saveState();
-      renderPreview();
+      debouncedRender();
     });
   });
 }
@@ -176,7 +250,7 @@ function createExperienceItem(index) {
     el.addEventListener('input', () => {
       state.experience[index][el.dataset.key] = el.value;
       saveState();
-      renderPreview();
+      debouncedRender();
     });
   });
   return div;
@@ -227,7 +301,7 @@ function createEducationItem(index) {
     el.addEventListener('input', () => {
       state.education[index][el.dataset.key] = el.value;
       saveState();
-      renderPreview();
+      debouncedRender();
     });
   });
   return div;
@@ -274,7 +348,7 @@ function createProjectItem(index) {
     el.addEventListener('input', () => {
       state.projects[index][el.dataset.key] = el.value;
       saveState();
-      renderPreview();
+      debouncedRender();
     });
   });
   return div;
@@ -321,7 +395,7 @@ function createCertificationItem(index) {
     el.addEventListener('input', () => {
       state.certifications[index][el.dataset.key] = el.value;
       saveState();
-      renderPreview();
+      debouncedRender();
     });
   });
   return div;
@@ -491,13 +565,22 @@ function bindHeaderActions() {
       try {
         const data = JSON.parse(ev.target.result);
         state = { ...defaultState, ...data };
+        sanitizeState();
         saveState();
         hydrateForm();
         renderPreview();
         showToast('Resume data imported!');
       } catch (err) {
-        showToast('Invalid JSON file');
+        console.error('Import error:', err);
+        state = loadState();
+        sanitizeState();
+        hydrateForm();
+        renderPreview();
+        showToast('Error importing file. Please check the JSON format.');
       }
+    };
+    reader.onerror = () => {
+      showToast('Error reading file');
     };
     reader.readAsText(file);
     e.target.value = '';
