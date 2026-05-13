@@ -268,6 +268,12 @@ input, textarea, select { font-family: inherit; }
   font-family: var(--font-ui); font-size: 9.5pt; line-height: 1.35;
   padding: 16px 22px; flex-shrink: 0;
   transition: background 0.4s ease, color 0.4s ease;
+  display: flex; flex-direction: column;
+}
+
+/* Content wrapper that fills remaining page space */
+.resume-content {
+  flex: 1; display: flex; flex-direction: column;
 }
 
 /* Dark Resume Theme */
@@ -672,7 +678,7 @@ input, textarea, select { font-family: inherit; }
 
 /* Shared resume entry spacing */
 .resume-entry { margin-bottom: 3px; }
-.resume-section { margin-bottom: 1px; }
+.resume-section { margin-bottom: 1px; transition: margin-bottom 0.2s ease; }
 .resume-summary { font-size: 9pt; color: #000; line-height: 1.35; margin-top: 1px; }
 
 /* ==================== MOBILE TOGGLE ==================== */
@@ -700,37 +706,43 @@ input, textarea, select { font-family: inherit; }
 @page { margin: 0; size: A4; }
 @media print {
   body { background: #fff; margin: 0; }
-  .app-header, .editor-panel, .mobile-toggle, .bg-mesh, .toast, .about-section, .modal-overlay { display: none !important; }
+  .app-header, .editor-panel, .mobile-toggle, .bg-mesh, .toast, .about-section, .modal-overlay, .seo-hidden { display: none !important; }
   .app-container { display: block; }
   .preview-panel {
     display: block !important; padding: 0; background: #fff; overflow: visible;
   }
+
+  /* Keep the resume page looking exactly like the preview */
   .resume-page {
     width: 100%; box-shadow: none; border-radius: 0;
-    margin: 0; padding: 10px 14px; min-height: auto;
-    font-size: 9pt; line-height: 1.25;
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
   }
-  .resume-page .resume-header { padding-bottom: 6px; margin-bottom: 6px; }
-  .resume-page .resume-name { font-size: 18pt !important; }
-  .resume-page .resume-title { font-size: 9pt !important; }
-  .resume-page .resume-contact { font-size: 7.5pt !important; line-height: 1.4 !important; }
-  .resume-page .section-title { margin-top: 5px; margin-bottom: 2px; font-size: 10pt !important; }
-  .resume-page .resume-entry { margin-bottom: 2px; }
-  .resume-page .resume-section { margin-bottom: 0; }
-  .resume-page .resume-summary { line-height: 1.25; margin-top: 1px; font-size: 8.5pt !important; }
-  .resume-page .entry-header { margin-bottom: 0; }
-  .resume-page .entry-title { font-size: 9pt !important; }
-  .resume-page .entry-subtitle { font-size: 8.5pt !important; }
-  .resume-page .entry-date { font-size: 7.5pt !important; }
-  .resume-page .entry-desc { margin-top: 1px; line-height: 1.25; font-size: 8.5pt !important; }
-  .resume-page .entry-desc ul { margin: 1px 0 0 14px !important; }
-  .resume-page .entry-desc li { margin-bottom: 0; }
-  .resume-page .skills-list { gap: 3px; margin-top: 1px; }
-  .resume-page .skill-pill { padding: 1px 6px; font-size: 7.5pt !important; }
+  .resume-content { flex: 1; display: flex; flex-direction: column; }
+
+  /* Preserve template backgrounds and colors in print */
+  .resume-page * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Ensure light resume text is black for readability */
   .resume-page:not(.resume-dark) { color: #000 !important; }
-  .resume-page:not(.resume-dark) * { color: #000 !important; }
-  .resume-page.resume-dark { background: #1a1a2e !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .resume-page.resume-dark * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .resume-page:not(.resume-dark) .resume-name,
+  .resume-page:not(.resume-dark) .resume-title,
+  .resume-page:not(.resume-dark) .resume-contact,
+  .resume-page:not(.resume-dark) .resume-contact a,
+  .resume-page:not(.resume-dark) .section-title,
+  .resume-page:not(.resume-dark) .entry-title,
+  .resume-page:not(.resume-dark) .entry-subtitle,
+  .resume-page:not(.resume-dark) .entry-date,
+  .resume-page:not(.resume-dark) .entry-desc,
+  .resume-page:not(.resume-dark) .entry-desc p,
+  .resume-page:not(.resume-dark) .entry-desc li,
+  .resume-page:not(.resume-dark) .resume-summary { color: #000 !important; }
+
+  /* Dark resume theme in print */
+  .resume-page.resume-dark { background: #1a1a2e !important; }
+
+  /* Prevent page breaks inside sections/entries */
   .page-break-indicator { display: none; }
   .resume-section { page-break-inside: avoid; }
   .resume-entry { page-break-inside: avoid; }

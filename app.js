@@ -120,6 +120,15 @@ document.addEventListener('DOMContentLoaded', () => {
   bindATS();
   bindThemeToggle();
   bindAutoSuggestions();
+
+  // Recalculate page fill spacing before printing
+  window.addEventListener('beforeprint', () => autoFillPage());
+
+  // Recalculate on window resize (for responsive preview)
+  window.addEventListener('resize', () => {
+    clearTimeout(window._resizeFillTimer);
+    window._resizeFillTimer = setTimeout(() => autoFillPage(), 200);
+  });
 });
 
 // ==================== HYDRATE FORM FROM STATE ====================
@@ -428,16 +437,26 @@ function renderPreview() {
   const page = document.getElementById('resume-page');
   page.className = `resume-page template-${state.template}`;
 
+  // Preserve dark mode class if active
+  if (resumeDark) page.classList.add('resume-dark');
+
   const s = state;
   let html = '';
 
   // Header
   const contactParts = [];
+  // Helper: ensure URLs have a protocol so the browser doesn't treat them as relative paths
+  const ensureUrl = (url) => /^https?:\/\//i.test(url) ? url : 'https://' + url;
+
   if (s.email) contactParts.push(`<a href="mailto:${esc(s.email)}" style="color:#000;text-decoration:none;"><i class="fa-solid fa-envelope" style="margin-right:4px;"></i>${esc(s.email)}</a>`);
   if (s.phone) contactParts.push(`<span><i class="fa-solid fa-phone" style="margin-right:4px;"></i>${esc(s.phone)}</span>`);
   if (s.location) contactParts.push(`<span><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>${esc(s.location)}</span>`);
-  if (s.website) contactParts.push(`<a href="${esc(s.website)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-linkedin" style="margin-right:4px;"></i>${esc(s.website.replace(/^https?:\/\//, ''))}</a>`);
-  if (s.github) contactParts.push(`<a href="${esc(s.github)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-github" style="margin-right:4px;"></i>${esc(s.github.replace(/^https?:\/\//, ''))}</a>`);
+  if (s.website) {
+    const isLinkedIn = s.website.toLowerCase().includes('linkedin');
+    const icon = isLinkedIn ? 'fa-brands fa-linkedin' : 'fa-solid fa-globe';
+    contactParts.push(`<a href="${esc(ensureUrl(s.website))}" target="_blank" style="color:#000;text-decoration:none;"><i class="${icon}" style="margin-right:4px;"></i>${esc(s.website.replace(/^https?:\/\//, ''))}</a>`);
+  }
+  if (s.github) contactParts.push(`<a href="${esc(ensureUrl(s.github))}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-github" style="margin-right:4px;"></i>${esc(s.github.replace(/^https?:\/\//, ''))}</a>`);
 
   html += `<div class="resume-header">
     <div>
@@ -446,6 +465,9 @@ function renderPreview() {
     </div>
     <div class="resume-contact">${contactParts.join(s.template === 'modern' ? '<br/>' : ' &nbsp;|&nbsp; ')}</div>
   </div>`;
+
+  // Start content wrapper (fills remaining page space)
+  html += '<div class="resume-content">';
 
   // Summary
   if (s.summary) {
@@ -535,7 +557,80 @@ function renderPreview() {
     html += '</div>';
   }
 
+  // Close content wrapper
+  html += '</div>';
+
   page.innerHTML = html;
+
+  // Auto-fill page: distribute remaining space between sections
+  requestAnimationFrame(() => autoFillPage());
+}
+
+// ==================== AUTO-FILL PAGE SPACING ====================
+function autoFillPage() {
+  const page = document.getElementById('resume-page');
+  if (!page) return;
+
+  const contentWrapper = page.querySelector('.resume-content');
+  if (!contentWrapper) return;
+
+  const sections = contentWrapper.querySelectorAll('.resume-section');
+  if (sections.length === 0) return;
+
+  // Reset any previously applied spacing and temporarily disable flex stretch
+  sections.forEach(sec => { sec.style.marginBottom = ''; });
+  contentWrapper.style.flex = 'none';
+
+  // Force reflow
+  void page.offsetHeight;
+
+  // Get the page's padding
+  const pageStyle = getComputedStyle(page);
+  const paddingTop = parseFloat(pageStyle.paddingTop) || 0;
+  const paddingBottom = parseFloat(pageStyle.paddingBottom) || 0;
+
+  // The page's target height: use min-height from CSS (297mm → ~1122px)
+  // Fall back to offsetHeight if min-height isn't resolved properly
+  let targetHeight = parseFloat(pageStyle.minHeight) || 0;
+  if (targetHeight <= 0) targetHeight = page.offsetHeight;
+  const usableHeight = targetHeight - paddingTop - paddingBottom;
+
+  if (usableHeight <= 0) {
+    contentWrapper.style.flex = '';
+    return;
+  }
+
+  // Measure header height
+  const header = page.querySelector('.resume-header');
+  const headerHeight = header ? header.offsetHeight : 0;
+  const headerMargin = header ? (parseFloat(getComputedStyle(header).marginBottom) || 0) : 0;
+
+  // Measure total height of all sections (natural, without flex stretch)
+  let sectionsHeight = 0;
+  sections.forEach(sec => {
+    sectionsHeight += sec.offsetHeight;
+    const style = getComputedStyle(sec);
+    sectionsHeight += (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
+  });
+
+  const totalUsed = headerHeight + headerMargin + sectionsHeight;
+  const remainingSpace = usableHeight - totalUsed;
+
+  // Restore flex stretch
+  contentWrapper.style.flex = '';
+
+  // Only distribute if there's meaningful remaining space (>30px)
+  if (remainingSpace > 30) {
+    // Distribute evenly between sections as extra bottom margin
+    const extraPerSection = Math.floor(remainingSpace / sections.length);
+    // Cap at 200px max per gap so it still looks like a real resume
+    const cappedExtra = Math.min(extraPerSection, 200);
+
+    sections.forEach(sec => {
+      const currentMargin = parseFloat(getComputedStyle(sec).marginBottom) || 0;
+      sec.style.marginBottom = (currentMargin + cappedExtra) + 'px';
+    });
+  }
 }
 
 // ==================== HEADER ACTION BUTTONS ====================
