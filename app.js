@@ -31,6 +31,7 @@ const defaultState = {
   skillsLayout: 'pills', // 'pills' (badges), 'list' (bullet lines), or 'paragraph'
   skillsText: '',
   sectionOrder: ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
+  userFontScale: 1.0, // Global resume font size scale factor (80% - 125%)
   fullName: '',
   jobTitle: '',
   email: '',
@@ -77,6 +78,12 @@ function sanitizeState() {
     state.skillsLayout = 'pills';
   }
 
+  // Ensure userFontScale is within valid bounds (80% to 125%)
+  if (typeof state.userFontScale !== 'number' || isNaN(state.userFontScale)) {
+    state.userFontScale = 1.0;
+  }
+  state.userFontScale = Math.min(1.25, Math.max(0.80, parseFloat(state.userFontScale.toFixed(2))));
+
   // Ensure section order array
   const defaultOrder = ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'];
   if (!Array.isArray(state.sectionOrder)) {
@@ -115,6 +122,7 @@ function sanitizeState() {
   if (!Array.isArray(state.projects)) state.projects = [];
   state.projects = state.projects.map(p => ({
     name: String(p?.name || ''),
+    github: String(p?.github || ''),
     link: String(p?.link || ''),
     description: String(p?.description || '')
   }));
@@ -140,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindATS();
   bindThemeToggle();
   bindAutoSuggestions();
+  bindFontSizeControl();
   initDragAndDropSections();
 
   // Recalculate page fill spacing before printing
@@ -196,6 +205,10 @@ function hydrateForm() {
   // Skills tags & layout UI
   updateSkillsLayoutUI();
   renderSkillTags();
+
+  // Font size display
+  const fontValEl = document.getElementById('font-size-val');
+  if (fontValEl) fontValEl.textContent = `${Math.round((state.userFontScale || 1.0) * 100)}%`;
 }
 
 // ==================== BIND SIMPLE INPUTS ====================
@@ -416,14 +429,18 @@ function createProjectItem(index) {
   div.className = 'repeatable-item';
   div.innerHTML = `
     <button class="remove-item" onclick="removeProject(${index})">×</button>
+    <div class="form-group">
+      <label>Project Name</label>
+      <input type="text" value="${esc(proj.name || '')}" data-proj="${index}" data-key="name" placeholder="e.g. E-Commerce Platform" />
+    </div>
     <div class="form-row">
       <div class="form-group">
-        <label>Project Name</label>
-        <input type="text" value="${esc(proj.name || '')}" data-proj="${index}" data-key="name" />
+        <label>GitHub Repository (optional)</label>
+        <input type="url" value="${esc(proj.github || '')}" data-proj="${index}" data-key="github" placeholder="https://github.com/username/repo" />
       </div>
       <div class="form-group">
-        <label>Link (optional)</label>
-        <input type="url" value="${esc(proj.link || '')}" data-proj="${index}" data-key="link" placeholder="https://..." />
+        <label>Live Demo / Website (optional)</label>
+        <input type="url" value="${esc(proj.link || '')}" data-proj="${index}" data-key="link" placeholder="https://myproject.com" />
       </div>
     </div>
     <div class="form-group">
@@ -442,7 +459,7 @@ function createProjectItem(index) {
 }
 
 function addProject() {
-  state.projects.push({ name: '', link: '', description: '' });
+  state.projects.push({ name: '', github: '', link: '', description: '' });
   saveState();
   const list = document.getElementById('projects-list');
   list.appendChild(createProjectItem(state.projects.length - 1));
@@ -514,6 +531,9 @@ function rebuildList(containerId, arr, createFn) {
 function renderPreview() {
   const page = document.getElementById('resume-page');
   page.className = `resume-page template-${state.template}`;
+
+  // Apply user font scale CSS property
+  page.style.setProperty('--user-font-scale', state.userFontScale || 1.0);
 
   // Preserve dark mode class if active
   if (resumeDark) page.classList.add('resume-dark');
@@ -624,10 +644,23 @@ function renderPreview() {
       let res = `<div class="resume-section"><div class="section-title">Projects</div>`;
       s.projects.forEach(proj => {
         if (!proj.name) return;
+
+        const links = [];
+        if (proj.github && proj.github.trim()) {
+          const ghUrl = ensureUrl(proj.github.trim());
+          const ghText = proj.github.trim().replace(/^https?:\/\/(www\.)?github\.com\/?/i, 'github.com/').replace(/\/$/, '');
+          links.push(`<a href="${esc(ghUrl)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-github" style="margin-right:4px;"></i>${esc(ghText)}</a>`);
+        }
+        if (proj.link && proj.link.trim()) {
+          const demoUrl = ensureUrl(proj.link.trim());
+          const demoText = proj.link.trim().replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+          links.push(`<a href="${esc(demoUrl)}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="margin-right:3px;font-size:0.85em;"></i>${esc(demoText)}</a>`);
+        }
+
         res += `<div class="resume-entry">
           <div class="entry-header">
             <div class="entry-title">${esc(proj.name)}</div>
-            ${proj.link ? `<a href="${esc(proj.link)}" class="entry-date" target="_blank" style="color:#000;text-decoration:none;">${esc(proj.link.replace(/^https?:\/\//, ''))}</a>` : ''}
+            <div class="entry-date" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">${links.join('')}</div>
           </div>
           ${proj.description ? `<div class="entry-desc">${esc(proj.description)}</div>` : ''}
         </div>`;
@@ -821,6 +854,31 @@ function bindHeaderActions() {
     reader.readAsText(file);
     e.target.value = '';
   });
+}
+
+// ==================== FONT SIZE STEPPER CONTROL ====================
+function bindFontSizeControl() {
+  const decBtn = document.getElementById('btn-font-dec');
+  const incBtn = document.getElementById('btn-font-inc');
+  const valEl = document.getElementById('font-size-val');
+
+  if (decBtn) {
+    decBtn.addEventListener('click', () => {
+      state.userFontScale = Math.max(0.80, parseFloat(((state.userFontScale || 1.0) - 0.05).toFixed(2)));
+      if (valEl) valEl.textContent = `${Math.round(state.userFontScale * 100)}%`;
+      saveState();
+      renderPreview();
+    });
+  }
+
+  if (incBtn) {
+    incBtn.addEventListener('click', () => {
+      state.userFontScale = Math.min(1.25, parseFloat(((state.userFontScale || 1.0) + 0.05).toFixed(2)));
+      if (valEl) valEl.textContent = `${Math.round(state.userFontScale * 100)}%`;
+      saveState();
+      renderPreview();
+    });
+  }
 }
 
 // ==================== DARK/LIGHT RESUME THEME ====================
