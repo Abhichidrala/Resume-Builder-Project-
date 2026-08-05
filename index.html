@@ -321,6 +321,24 @@
     </div>
   </div>
 
+  <!-- Changelog / What's New Modal -->
+  <div class="modal-overlay" id="changelog-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2><i data-lucide="sparkles" class="lucide-sec"></i> What's New</h2>
+        <button class="modal-close" id="changelog-close"><i data-lucide="x" class="lucide-btn"></i></button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div class="changelog-container" id="changelog-content">
+          <!-- Populated dynamically by JS -->
+        </div>
+        <div class="modal-footer" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+          <button class="btn btn-primary" id="changelog-acknowledge-btn" style="width:100%;">Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Features & About Section Footer -->
   <footer class="footer-section" id="footer-info">
     <div class="footer-inner">
@@ -436,7 +454,10 @@
               </div>
               <div class="dev-meta">
                 <h4 class="dev-name">Chidrala Abhilash</h4>
-                <p class="dev-role">AI &amp; Data Science Student</p>
+                <div class="dev-role-group">
+                  <p class="dev-role">AI &amp; Data Science Student</p>
+                  <span class="dev-version-badge" id="dev-app-version" title="View Version Changelog">v1.0.0</span>
+                </div>
               </div>
             </div>
             
@@ -468,6 +489,15 @@
         </div>
 
       </div>
+
+      <!-- Footer Bottom Copyright & Version -->
+      <div class="footer-bottom">
+        <p class="copyright-text">&copy; 2026 ResumeForge. All rights reserved.</p>
+        <button class="footer-version-btn" id="footer-version-trigger" title="View Version Changelog">
+          <i data-lucide="info" style="width:12px;height:12px;vertical-align:-1px;"></i> Version <span class="app-version-text">v1.0.0</span>
+        </button>
+      </div>
+
     </div>
   </footer>
 

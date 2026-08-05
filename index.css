@@ -3292,3 +3292,166 @@ select {
   background: #111;
   color: #666;
 }
+
+/* ==================== FOOTER BOTTOM & COPYRIGHT ==================== */
+.footer-bottom {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .footer-bottom {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.copyright-text {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.footer-version-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.footer-version-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+.footer-version-btn svg {
+  margin-top: -1px;
+}
+
+/* ==================== DEVELOPER VERSION BADGE ==================== */
+.dev-role-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dev-version-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.dev-version-badge:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+/* ==================== CHANGELOG MODAL CONTENT ==================== */
+.changelog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.changelog-version-block {
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: var(--transition);
+}
+
+.changelog-version-block.current-version {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.changelog-version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.changelog-v-num {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.current-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  background: #fff;
+  color: #000;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.changelog-v-date {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.changelog-v-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.changelog-v-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.changelog-v-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #999;
+  line-height: 1.4;
+}
+
+.changelog-v-list li .bullet {
+  color: #fff;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.changelog-v-list li .text {
+  flex: 1;
+}

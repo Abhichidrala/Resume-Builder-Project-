@@ -3,6 +3,33 @@
    State management, live preview, templates, persistence
    ====================================================== */
 
+// ==================== VERSION CONFIGURATION ====================
+const APP_VERSION = '1.0.0';
+const CHANGELOG_DATA = {
+  '1.0.0': {
+    date: 'Aug 5, 2026',
+    title: 'Visual Redesign & Versioning System',
+    changes: [
+      'Redesigned the "About Developer" card with gradient monogram avatar, tags, and interest chips.',
+      'Created distinct, gorgeous "Futures" and "Upcoming Futures" sections to display current and planned features.',
+      'Integrated a brand-new professional Version Management System with automatic update alerts.',
+      'Built a "What\'s New" changelog console displaying app development history.',
+      'Switched developer social link icons to robust Font Awesome integration.'
+    ]
+  },
+  '0.9.0': {
+    date: 'Jul 2026',
+    title: 'Beta Release',
+    changes: [
+      '22 premium resume layouts including Split Header, Nordic Clean, Compact, Serif Academic.',
+      'Intelligent Auto-Fit system automatically adjusting padding and font sizes to fit exactly one A4 page.',
+      'Real-time ATS Score Matcher parsing keyword overlap with job descriptions.',
+      'Dynamic QR code generation linking to portfolios or social profiles.',
+      'Drag and drop section reordering support for custom layouts.'
+    ]
+  }
+};
+
 // ==================== DEBOUNCE UTILITY ====================
 let _renderTimer = null;
 function debouncedRender(delay = 150) {
@@ -158,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindAutoSuggestions();
   bindFontSizeControl();
   initDragAndDropSections();
+  initVersionManager();
 
   window.addEventListener('load', () => {
     applyGlobalFontScale();
@@ -1396,4 +1424,73 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ==================== VERSION & CHANGELOG MANAGEMENT ====================
+function initVersionManager() {
+  const footerBtn = document.getElementById('footer-version-trigger');
+  const devBadge = document.getElementById('dev-app-version');
+  const modal = document.getElementById('changelog-modal');
+  const closeBtn = document.getElementById('changelog-close');
+  const ackBtn = document.getElementById('changelog-acknowledge-btn');
+
+  // Populate version labels
+  document.querySelectorAll('.app-version-text').forEach(el => {
+    el.textContent = `v${APP_VERSION}`;
+  });
+  if (devBadge) {
+    devBadge.textContent = `v${APP_VERSION}`;
+  }
+
+  // Helper to open/close
+  const openModal = () => {
+    renderChangelogContent();
+    if (modal) modal.classList.add('active');
+  };
+  const closeModal = () => {
+    if (modal) modal.classList.remove('active');
+    // Save to localStorage when closed/acknowledged
+    localStorage.setItem('resumeforge_last_seen_version', APP_VERSION);
+  };
+
+  if (footerBtn) footerBtn.addEventListener('click', openModal);
+  if (devBadge) devBadge.addEventListener('click', openModal);
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (ackBtn) ackBtn.addEventListener('click', closeModal);
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+  }
+
+  // Automatic Check on load: check if stored version is different from APP_VERSION
+  const lastSeen = localStorage.getItem('resumeforge_last_seen_version');
+  if (lastSeen !== APP_VERSION) {
+    setTimeout(() => {
+      openModal();
+    }, 800);
+  }
+}
+
+function renderChangelogContent() {
+  const container = document.getElementById('changelog-content');
+  if (!container) return;
+
+  let html = '';
+  Object.entries(CHANGELOG_DATA).forEach(([version, details]) => {
+    const isCurrent = version === APP_VERSION;
+    html += `
+      <div class="changelog-version-block ${isCurrent ? 'current-version' : ''}">
+        <div class="changelog-version-header">
+          <span class="changelog-v-num">Version ${version} ${isCurrent ? '<span class="current-badge">Latest</span>' : ''}</span>
+          <span class="changelog-v-date">${details.date}</span>
+        </div>
+        <h4 class="changelog-v-title">${esc(details.title)}</h4>
+        <ul class="changelog-v-list">
+          ${details.changes.map(change => `<li><span class="bullet">•</span><span class="text">${esc(change)}</span></li>`).join('')}
+        </ul>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
 }
