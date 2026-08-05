@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   </noscript>
   <link rel="stylesheet" href="index.css" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 
@@ -63,30 +64,42 @@
     <!-- ===== EDITOR PANEL ===== -->
     <aside class="editor-panel" id="editor-panel">
 
+      <!-- Template Categories Filter -->
+      <div class="template-categories">
+        <button class="category-filter-btn active" data-category="all">All</button>
+        <button class="category-filter-btn" data-category="ats">ATS</button>
+        <button class="category-filter-btn" data-category="modern">Modern</button>
+        <button class="category-filter-btn" data-category="professional">Professional</button>
+        <button class="category-filter-btn" data-category="executive">Executive</button>
+        <button class="category-filter-btn" data-category="creative">Creative</button>
+        <button class="category-filter-btn" data-category="minimal">Minimal</button>
+        <button class="category-filter-btn" data-category="student">Student</button>
+      </div>
+
       <!-- Template Selector -->
       <div class="template-selector">
-        <button class="template-btn active" data-template="modern"><i data-lucide="sparkles" class="lucide-tpl"></i> Modern</button>
-        <button class="template-btn" data-template="classic"><i data-lucide="diamond" class="lucide-tpl"></i> Classic</button>
-        <button class="template-btn" data-template="minimal"><i data-lucide="circle" class="lucide-tpl"></i> Minimal</button>
-        <button class="template-btn" data-template="executive"><i data-lucide="square" class="lucide-tpl"></i> Executive</button>
-        <button class="template-btn" data-template="elegant"><i data-lucide="gem" class="lucide-tpl"></i> Elegant</button>
-        <button class="template-btn" data-template="creative"><i data-lucide="flower-2" class="lucide-tpl"></i> Creative</button>
-        <button class="template-btn" data-template="tech"><i data-lucide="terminal" class="lucide-tpl"></i> Tech</button>
-        <button class="template-btn" data-template="compact"><i data-lucide="minimize-2" class="lucide-tpl"></i> Compact</button>
-        <button class="template-btn" data-template="professional"><i data-lucide="shield" class="lucide-tpl"></i> Professional</button>
-        <button class="template-btn" data-template="bold"><i data-lucide="bold" class="lucide-tpl"></i> Bold</button>
-        <button class="template-btn" data-template="minimalist-pro"><i data-lucide="minus" class="lucide-tpl"></i> Minimal Pro</button>
-        <button class="template-btn" data-template="sidebar-split"><i data-lucide="columns" class="lucide-tpl"></i> Split Header</button>
-        <button class="template-btn" data-template="corporate-lead"><i data-lucide="briefcase" class="lucide-tpl"></i> Corporate Lead</button>
-        <button class="template-btn" data-template="nordic-clean"><i data-lucide="compass" class="lucide-tpl"></i> Nordic Clean</button>
-        <button class="template-btn" data-template="swiss-grid"><i data-lucide="layout-grid" class="lucide-tpl"></i> Swiss Grid</button>
-        <button class="template-btn" data-template="serif-academic"><i data-lucide="book-open" class="lucide-tpl"></i> Academic Serif</button>
-        <button class="template-btn" data-template="developer-terminal"><i data-lucide="code" class="lucide-tpl"></i> Dev Terminal</button>
-        <button class="template-btn" data-template="startup-modern"><i data-lucide="zap" class="lucide-tpl"></i> Startup Modern</button>
-        <button class="template-btn" data-template="executive-suite"><i data-lucide="award" class="lucide-tpl"></i> Exec Suite</button>
-        <button class="template-btn" data-template="hybrid-compact"><i data-lucide="layers" class="lucide-tpl"></i> Hybrid Compact</button>
-        <button class="template-btn" data-template="metro-sleek"><i data-lucide="file-code" class="lucide-tpl"></i> Metro Sleek</button>
-        <button class="template-btn" data-template="monochrome-luxe"><i data-lucide="crown" class="lucide-tpl"></i> Mono Luxe</button>
+        <button class="template-btn active" data-template="modern" data-categories="modern,student"><i data-lucide="sparkles" class="lucide-tpl"></i> Modern</button>
+        <button class="template-btn" data-template="classic" data-categories="ats,professional,student"><i data-lucide="diamond" class="lucide-tpl"></i> Classic</button>
+        <button class="template-btn" data-template="minimal" data-categories="ats,minimal"><i data-lucide="circle" class="lucide-tpl"></i> Minimal</button>
+        <button class="template-btn" data-template="executive" data-categories="executive,professional"><i data-lucide="square" class="lucide-tpl"></i> Executive</button>
+        <button class="template-btn" data-template="elegant" data-categories="executive,professional"><i data-lucide="gem" class="lucide-tpl"></i> Elegant</button>
+        <button class="template-btn" data-template="creative" data-categories="creative"><i data-lucide="flower-2" class="lucide-tpl"></i> Creative</button>
+        <button class="template-btn" data-template="tech" data-categories="creative,student"><i data-lucide="terminal" class="lucide-tpl"></i> Tech</button>
+        <button class="template-btn" data-template="compact" data-categories="ats,minimal"><i data-lucide="minimize-2" class="lucide-tpl"></i> Compact</button>
+        <button class="template-btn" data-template="professional" data-categories="ats,professional"><i data-lucide="shield" class="lucide-tpl"></i> Professional</button>
+        <button class="template-btn" data-template="bold" data-categories="creative"><i data-lucide="bold" class="lucide-tpl"></i> Bold</button>
+        <button class="template-btn" data-template="minimalist-pro" data-categories="modern,minimal"><i data-lucide="minus" class="lucide-tpl"></i> Minimal Pro</button>
+        <button class="template-btn" data-template="sidebar-split" data-categories="creative"><i data-lucide="columns" class="lucide-tpl"></i> Split Header</button>
+        <button class="template-btn" data-template="corporate-lead" data-categories="ats,professional,executive"><i data-lucide="briefcase" class="lucide-tpl"></i> Corporate Lead</button>
+        <button class="template-btn" data-template="nordic-clean" data-categories="modern,minimal"><i data-lucide="compass" class="lucide-tpl"></i> Nordic Clean</button>
+        <button class="template-btn" data-template="swiss-grid" data-categories="creative"><i data-lucide="layout-grid" class="lucide-tpl"></i> Swiss Grid</button>
+        <button class="template-btn" data-template="serif-academic" data-categories="ats,student"><i data-lucide="book-open" class="lucide-tpl"></i> Academic Serif</button>
+        <button class="template-btn" data-template="developer-terminal" data-categories="creative,student"><i data-lucide="code" class="lucide-tpl"></i> Dev Terminal</button>
+        <button class="template-btn" data-template="startup-modern" data-categories="modern,student"><i data-lucide="zap" class="lucide-tpl"></i> Startup Modern</button>
+        <button class="template-btn" data-template="executive-suite" data-categories="executive,professional"><i data-lucide="award" class="lucide-tpl"></i> Exec Suite</button>
+        <button class="template-btn" data-template="hybrid-compact" data-categories="ats,student"><i data-lucide="layers" class="lucide-tpl"></i> Hybrid Compact</button>
+        <button class="template-btn" data-template="metro-sleek" data-categories="modern"><i data-lucide="file-code" class="lucide-tpl"></i> Metro Sleek</button>
+        <button class="template-btn" data-template="monochrome-luxe" data-categories="professional,executive,minimal"><i data-lucide="crown" class="lucide-tpl"></i> Mono Luxe</button>
       </div>
 
       <!-- Personal Info -->
@@ -127,6 +140,29 @@
           <div class="form-group">
             <label for="github">GitHub</label>
             <input type="url" id="github" placeholder="https://github.com/username" data-field="github" />
+          </div>
+          <!-- QR Code Options -->
+          <div class="qr-code-options-group" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 255, 255, 0.1);">
+            <div class="form-group-checkbox" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+              <input type="checkbox" id="showQrCode" data-field="showQrCode" style="width: auto; margin: 0; cursor: pointer;" />
+              <label for="showQrCode" style="margin-bottom: 0; cursor: pointer; text-transform: none; font-size: 0.82rem; color: var(--text-primary);">Include QR Code</label>
+            </div>
+            <div id="qr-details-fields" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="qrSource">QR Link Source</label>
+                  <select id="qrSource" data-field="qrSource">
+                    <option value="website">Website / LinkedIn</option>
+                    <option value="github">GitHub</option>
+                    <option value="custom">Custom URL</option>
+                  </select>
+                </div>
+                <div class="form-group" id="qr-custom-url-group" style="display: none;">
+                  <label for="qrCustomUrl">Custom URL</label>
+                  <input type="url" id="qrCustomUrl" placeholder="https://example.com" data-field="qrCustomUrl" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -285,25 +321,153 @@
     </div>
   </div>
 
-  <!-- About Section -->
-  <footer class="about-section" id="about">
-    <div class="about-inner">
-      <h2 class="about-heading">About the Developer</h2>
-      <p class="about-text">
-        Hi, I'm <strong>Chidrala Abhilash</strong>, an AI &amp; Data Science student with a strong interest in web
-        development, UI design, and creative technology projects. I enjoy building modern and user-friendly applications
-        that solve real-world problems.
-      </p>
-      <p class="about-text">
-        This <strong>Resume Builder</strong> project was created to help users design professional resumes easily with
-        live preview, customizable templates, and instant PDF download functionality.
-      </p>
-      <p class="about-text">
-        I'm continuously learning new technologies and improving my skills through hands-on projects and practical
-        development experience.
-      </p>
-      <p class="about-text">You can reach me at <a
-          href="mailto:abhilashchidrala@gmail.com">abhilashchidrala@gmail.com</a></p>
+  <!-- Features & About Section Footer -->
+  <footer class="footer-section" id="footer-info">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        
+        <!-- Column 1: Futures (Active Features) -->
+        <div class="footer-card futures-card">
+          <h3 class="footer-card-heading"><i data-lucide="zap" class="lucide-sec"></i> Futures</h3>
+          <p class="section-desc">Fully operational core capabilities powering your resume creation.</p>
+          <ul class="futures-list-container">
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="layout"></i></span>
+              <div class="future-details">
+                <span class="future-title">22 Premium Templates</span>
+                <span class="future-text">Fully customizable, ATS-friendly designs.</span>
+              </div>
+            </li>
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="bar-chart-2"></i></span>
+              <div class="future-details">
+                <span class="future-title">ATS Score Matcher</span>
+                <span class="future-text">Real-time parser &amp; keyword scanner.</span>
+              </div>
+            </li>
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="eye"></i></span>
+              <div class="future-details">
+                <span class="future-title">Instant Live Preview</span>
+                <span class="future-text">Watch changes render as you type.</span>
+              </div>
+            </li>
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="qr-code"></i></span>
+              <div class="future-details">
+                <span class="future-title">Dynamic QR Code</span>
+                <span class="future-text">Generate scan-to-view links instantly.</span>
+              </div>
+            </li>
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="move"></i></span>
+              <div class="future-details">
+                <span class="future-title">Drag &amp; Drop Order</span>
+                <span class="future-text">Reorder resume sections on the fly.</span>
+              </div>
+            </li>
+            <li class="future-item">
+              <span class="future-icon-wrapper"><i data-lucide="shield-check"></i></span>
+              <div class="future-details">
+                <span class="future-title">Privacy-First Design</span>
+                <span class="future-text">All data stays in your local browser storage.</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- Column 2: Upcoming Futures (Roadmap) -->
+        <div class="footer-card upcoming-card">
+          <h3 class="footer-card-heading"><i data-lucide="calendar" class="lucide-sec"></i> Upcoming Futures</h3>
+          <p class="section-desc">Features currently in research, planning, or active development.</p>
+          <ul class="upcoming-list-container">
+            <li class="upcoming-item">
+              <div class="upcoming-header">
+                <span class="upcoming-title">Cover Letter Builder</span>
+                <span class="status-badge in-progress">In Progress</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 75%;"></div>
+              </div>
+              <span class="upcoming-desc">Create matching cover letters for templates.</span>
+            </li>
+            <li class="upcoming-item">
+              <div class="upcoming-header">
+                <span class="upcoming-title">AI Resume Optimizer</span>
+                <span class="status-badge coding">In Dev</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 45%;"></div>
+              </div>
+              <span class="upcoming-desc">AI-powered suggestions &amp; bullet points.</span>
+            </li>
+            <li class="upcoming-item">
+              <div class="upcoming-header">
+                <span class="upcoming-title">LinkedIn Import</span>
+                <span class="status-badge planned">Planned</span>
+              </div>
+              <span class="upcoming-desc">Populate details automatically with a single click.</span>
+            </li>
+            <li class="upcoming-item">
+              <div class="upcoming-header">
+                <span class="upcoming-title">Multi-Language Export</span>
+                <span class="status-badge planned">Planned</span>
+              </div>
+              <span class="upcoming-desc">Translate and export resumes to Spanish, French, etc.</span>
+            </li>
+            <li class="upcoming-item">
+              <div class="upcoming-header">
+                <span class="upcoming-title">Cloud Auto-Sync</span>
+                <span class="status-badge researching">Researching</span>
+              </div>
+              <span class="upcoming-desc">Secure cross-device document synchronization.</span>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- Column 3: About Developer -->
+        <div class="footer-card dev-card">
+          <h3 class="footer-card-heading"><i data-lucide="user" class="lucide-sec"></i> About Developer</h3>
+          
+          <div class="dev-profile-container">
+            <div class="dev-identity-header">
+              <div class="dev-avatar-monogram">
+                <span>CA</span>
+              </div>
+              <div class="dev-meta">
+                <h4 class="dev-name">Chidrala Abhilash</h4>
+                <p class="dev-role">AI &amp; Data Science Student</p>
+              </div>
+            </div>
+            
+            <div class="dev-badges-container">
+              <span class="dev-chip">AI &amp; Data Science</span>
+              <span class="dev-chip">Frontend Developer</span>
+              <span class="dev-chip">UI/UX Enthusiast</span>
+            </div>
+            
+            <p class="dev-bio">
+              Hi, I'm passionate about building interactive, high-fidelity web applications that blend clean aesthetics with smooth usability. This Resume Builder operates entirely in your local browser to keep your data private.
+            </p>
+            
+            <div class="dev-actions-wrapper">
+              <a href="mailto:abhilashchidrala@gmail.com" class="dev-contact-btn mail-btn" title="Send Email">
+                <i data-lucide="mail"></i>
+                <span>abhilashchidrala@gmail.com</span>
+              </a>
+              <div class="dev-social-actions">
+                <a href="https://github.com/username" target="_blank" class="dev-social-icon-btn" title="GitHub">
+                  <i class="fa-brands fa-github"></i>
+                </a>
+                <a href="https://linkedin.com/in/john" target="_blank" class="dev-social-icon-btn" title="LinkedIn">
+                  <i class="fa-brands fa-linkedin"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </footer>
 

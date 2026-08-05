@@ -44,7 +44,10 @@ const defaultState = {
   experience: [],
   education: [],
   projects: [],
-  certifications: []
+  certifications: [],
+  showQrCode: false,
+  qrSource: 'website',
+  qrCustomUrl: ''
 };
 
 let state = loadState();
@@ -70,9 +73,13 @@ function saveState() {
 // Ensures imported/loaded data has correct types to prevent crashes
 function sanitizeState() {
   // Ensure string fields
-  ['fullName','jobTitle','email','phone','location','website','github','summary','template','skillsLayout','skillsText'].forEach(key => {
+  ['fullName','jobTitle','email','phone','location','website','github','summary','template','skillsLayout','skillsText','qrSource','qrCustomUrl'].forEach(key => {
     if (typeof state[key] !== 'string') state[key] = state[key] ? String(state[key]) : '';
   });
+
+  if (typeof state.showQrCode !== 'boolean') {
+    state.showQrCode = !!state.showQrCode;
+  }
 
   if (!['pills', 'list', 'paragraph'].includes(state.skillsLayout)) {
     state.skillsLayout = 'pills';
@@ -143,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPreview();
   bindInputs();
   bindTemplateSelector();
+  bindCategoryFilters();
   bindSkillInput();
   bindHeaderActions();
   bindATS();
@@ -171,8 +179,17 @@ function hydrateForm() {
   // Simple fields
   document.querySelectorAll('[data-field]').forEach(el => {
     const key = el.dataset.field;
-    if (state[key] !== undefined) el.value = state[key];
+    if (state[key] !== undefined) {
+      if (el.type === 'checkbox') {
+        el.checked = state[key];
+      } else {
+        el.value = state[key];
+      }
+    }
   });
+
+  // Update QR code inputs visibility
+  updateQrFieldsVisibility();
 
   // Template
   document.querySelectorAll('.template-btn').forEach(btn => {
@@ -216,13 +233,51 @@ function hydrateForm() {
   if (fontValEl) fontValEl.textContent = `${Math.round((state.userFontScale || 1.0) * 100)}%`;
 }
 
+function updateQrFieldsVisibility() {
+  const detailsFields = document.getElementById('qr-details-fields');
+  const customUrlGroup = document.getElementById('qr-custom-url-group');
+  if (detailsFields) {
+    detailsFields.style.display = state.showQrCode ? 'block' : 'none';
+  }
+  if (customUrlGroup) {
+    customUrlGroup.style.display = (state.showQrCode && state.qrSource === 'custom') ? 'block' : 'none';
+  }
+}
+
 // ==================== BIND SIMPLE INPUTS ====================
 function bindInputs() {
   document.querySelectorAll('[data-field]').forEach(el => {
-    el.addEventListener('input', () => {
-      state[el.dataset.field] = el.value;
+    const handler = () => {
+      if (el.type === 'checkbox') {
+        state[el.dataset.field] = el.checked;
+      } else {
+        state[el.dataset.field] = el.value;
+      }
       saveState();
+      updateQrFieldsVisibility();
       debouncedRender();
+    };
+    el.addEventListener('input', handler);
+    el.addEventListener('change', handler);
+  });
+}
+
+// ==================== TEMPLATE CATEGORIES FILTER ====================
+function bindCategoryFilters() {
+  document.querySelectorAll('.category-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.category-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.category;
+
+      document.querySelectorAll('.template-btn').forEach(tBtn => {
+        const cats = tBtn.dataset.categories ? tBtn.dataset.categories.split(',') : [];
+        if (cat === 'all' || cats.includes(cat)) {
+          tBtn.style.display = '';
+        } else {
+          tBtn.style.display = 'none';
+        }
+      });
     });
   });
 }
@@ -544,6 +599,13 @@ function renderPreview() {
   // Preserve dark mode class if active
   if (resumeDark) page.classList.add('resume-dark');
 
+  // Toggle QR code layout class
+  if (state.showQrCode) {
+    page.classList.add('has-qr');
+  } else {
+    page.classList.remove('has-qr');
+  }
+
   const s = state;
   let html = '';
 
@@ -562,12 +624,15 @@ function renderPreview() {
   }
   if (s.github) contactParts.push(`<a href="${esc(ensureUrl(s.github))}" target="_blank" style="color:#000;text-decoration:none;"><i class="fa-brands fa-github" style="margin-right:4px;"></i>${esc(s.github.replace(/^https?:\/\//, ''))}</a>`);
 
+  const qrHtml = s.showQrCode ? `<div class="resume-header-qr" id="resume-qr-code-img"></div>` : '';
+
   html += `<div class="resume-header">
     <div>
       <div class="resume-name">${esc(s.fullName) || 'Your Name'}</div>
       ${s.jobTitle ? `<div class="resume-title">${esc(s.jobTitle)}</div>` : ''}
     </div>
     <div class="resume-contact">${contactParts.join(s.template === 'modern' ? '<br/>' : ' &nbsp;|&nbsp; ')}</div>
+    ${qrHtml}
   </div>`;
 
   // Start content wrapper (fills remaining page space)
@@ -706,6 +771,36 @@ function renderPreview() {
   html += '</div>';
 
   page.innerHTML = html;
+
+  // Asynchronously generate QR code if enabled
+  if (s.showQrCode && typeof QRCode !== 'undefined') {
+    let qrUrl = '';
+    if (s.qrSource === 'website') qrUrl = s.website;
+    else if (s.qrSource === 'github') qrUrl = s.github;
+    else if (s.qrSource === 'custom') qrUrl = s.qrCustomUrl;
+
+    if (qrUrl && qrUrl.trim()) {
+      const ensuredUrl = ensureUrl(qrUrl.trim());
+      const qrContainer = document.getElementById('resume-qr-code-img');
+      QRCode.toDataURL(ensuredUrl, {
+        width: 120,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      }, function(err, url) {
+        if (!err && qrContainer) {
+          qrContainer.innerHTML = `<img src="${url}" alt="QR Code" style="width:100%;height:100%;display:block;" />`;
+        }
+      });
+    } else {
+      const qrContainer = document.getElementById('resume-qr-code-img');
+      if (qrContainer) {
+        qrContainer.innerHTML = '<span style="font-size:7pt;color:#999;text-align:center;">No URL</span>';
+      }
+    }
+  }
 
   // Auto-fill page: distribute remaining space between sections
   requestAnimationFrame(() => autoFillPage());
