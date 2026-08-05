@@ -28,6 +28,8 @@ function debouncedRender(delay = 150) {
 // ==================== STATE ====================
 const defaultState = {
   template: 'modern',
+  skillsLayout: 'pills', // 'pills' (badges), 'list' (bullet lines), or 'paragraph'
+  skillsText: '',
   fullName: '',
   jobTitle: '',
   email: '',
@@ -66,9 +68,13 @@ function saveState() {
 // Ensures imported/loaded data has correct types to prevent crashes
 function sanitizeState() {
   // Ensure string fields
-  ['fullName','jobTitle','email','phone','location','website','github','summary','template'].forEach(key => {
+  ['fullName','jobTitle','email','phone','location','website','github','summary','template','skillsLayout','skillsText'].forEach(key => {
     if (typeof state[key] !== 'string') state[key] = state[key] ? String(state[key]) : '';
   });
+
+  if (!['pills', 'list', 'paragraph'].includes(state.skillsLayout)) {
+    state.skillsLayout = 'pills';
+  }
 
   // Ensure array fields
   if (!Array.isArray(state.skills)) state.skills = [];
@@ -161,7 +167,8 @@ function hydrateForm() {
   certList.innerHTML = '';
   state.certifications.forEach((_, i) => certList.appendChild(createCertificationItem(i)));
 
-  // Skills tags
+  // Skills tags & layout UI
+  updateSkillsLayoutUI();
   renderSkillTags();
 }
 
@@ -203,6 +210,47 @@ function bindSkillInput() {
       addSkillFromInput(input);
     }
   });
+
+  // Layout selection buttons
+  document.querySelectorAll('.skills-layout-options .layout-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const layout = btn.dataset.layout;
+      state.skillsLayout = layout;
+
+      // Sync data when switching modes
+      if (layout === 'paragraph' && (!state.skillsText || !state.skillsText.trim()) && state.skills.length > 0) {
+        state.skillsText = state.skills.join(', ');
+        const textEl = document.getElementById('skillsText');
+        if (textEl) textEl.value = state.skillsText;
+      } else if (layout !== 'paragraph' && state.skills.length === 0 && state.skillsText && state.skillsText.trim()) {
+        const parsed = state.skillsText.replace(/[\n;]/g, ',').split(',').map(s => s.trim()).filter(Boolean);
+        state.skills = [...new Set(parsed)];
+        renderSkillTags();
+      }
+
+      saveState();
+      updateSkillsLayoutUI();
+      renderPreview();
+    });
+  });
+}
+
+function updateSkillsLayoutUI() {
+  const layout = state.skillsLayout || 'pills';
+  document.querySelectorAll('.skills-layout-options .layout-opt-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.layout === layout);
+  });
+
+  const singleWrapper = document.getElementById('skills-single-wrapper');
+  const paraWrapper = document.getElementById('skills-para-wrapper');
+
+  if (layout === 'paragraph') {
+    if (singleWrapper) singleWrapper.style.display = 'none';
+    if (paraWrapper) paraWrapper.style.display = 'block';
+  } else {
+    if (singleWrapper) singleWrapper.style.display = 'block';
+    if (paraWrapper) paraWrapper.style.display = 'none';
+  }
 }
 
 function renderSkillTags() {
@@ -516,11 +564,26 @@ function renderPreview() {
   }
 
   // Skills
-  if (s.skills.length > 0) {
+  const hasSingleSkills = s.skills.length > 0;
+  const hasParaSkills = s.skillsText && s.skillsText.trim().length > 0;
+  const layout = s.skillsLayout || 'pills';
+
+  if ((layout === 'paragraph' && hasParaSkills) || (layout !== 'paragraph' && hasSingleSkills) || hasSingleSkills || hasParaSkills) {
     html += `<div class="resume-section">
-      <div class="section-title">Skills</div>
-      <div class="skills-list">${s.skills.map(sk => `<span class="skill-pill">${esc(sk)}</span>`).join('')}</div>
-    </div>`;
+      <div class="section-title">Skills</div>`;
+    
+    if (layout === 'paragraph' && hasParaSkills) {
+      html += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
+    } else if (layout === 'list' && hasSingleSkills) {
+      html += `<ul class="skills-bullet-list">${s.skills.map(sk => `<li>${esc(sk)}</li>`).join('')}</ul>`;
+    } else if (hasSingleSkills) {
+      // Default: 'pills' (one by one as tags/badges)
+      html += `<div class="skills-list">${s.skills.map(sk => `<span class="skill-pill">${esc(sk)}</span>`).join('')}</div>`;
+    } else if (hasParaSkills) {
+      html += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
+    }
+
+    html += `</div>`;
   }
 
   // Projects
@@ -733,7 +796,7 @@ function analyzeATS(jobDescription) {
 function getResumeText() {
   const s = state;
   let text = [s.fullName, s.jobTitle, s.email, s.phone, s.location, s.website, s.github, s.summary].join(' ');
-  text += ' ' + s.skills.join(' ');
+  text += ' ' + s.skills.join(' ') + ' ' + (s.skillsText || '');
   s.experience.forEach(e => text += ` ${e.title} ${e.company} ${e.location} ${e.description}`);
   s.education.forEach(e => text += ` ${e.degree} ${e.institution} ${e.details}`);
   s.projects.forEach(p => text += ` ${p.name} ${p.description}`);
@@ -844,7 +907,15 @@ function getSuggestedSkills() {
 function addSkillFromInput(input) {
   const val = input.value.trim();
   if (!val) return;
-  state.skills.push(val);
+
+  // Support adding single skills or comma-separated skills
+  const items = val.split(',').map(s => s.trim()).filter(Boolean);
+  items.forEach(item => {
+    if (!state.skills.includes(item)) {
+      state.skills.push(item);
+    }
+  });
+
   input.value = '';
   document.getElementById('suggestions-dropdown').classList.remove('active');
   saveState();
@@ -876,6 +947,23 @@ function esc(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function formatSkillsParagraph(text) {
+  if (!text) return '';
+  const lines = text.split('\n');
+  return lines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+    // Auto-bold category titles if line contains colon (e.g. "Frontend:")
+    const colonIdx = trimmed.indexOf(':');
+    if (colonIdx > 0 && colonIdx < 35) {
+      const category = trimmed.substring(0, colonIdx + 1);
+      const rest = trimmed.substring(colonIdx + 1);
+      return `<div style="margin-bottom:3px;"><strong>${esc(category)}</strong>${esc(rest)}</div>`;
+    }
+    return `<div style="margin-bottom:3px;">${esc(trimmed)}</div>`;
+  }).filter(Boolean).join('');
 }
 
 function formatDesc(text) {

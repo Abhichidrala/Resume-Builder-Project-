@@ -156,12 +156,34 @@
           <span class="section-toggle">▾</span>
         </div>
         <div class="section-body">
-          <div class="form-group" style="position:relative;">
-            <label for="skillInput">Add a skill and press Enter</label>
-            <input type="text" id="skillInput" placeholder="e.g. JavaScript" autocomplete="off" />
-            <div class="suggestions-dropdown" id="suggestions-dropdown"></div>
+          <!-- Skills Layout Choice -->
+          <div class="form-group">
+            <label>Display Format</label>
+            <div class="skills-layout-options">
+              <button type="button" class="layout-opt-btn active" data-layout="pills" title="Show skills as individual tag badges (One by one)">🏷️ Badges (One by One)</button>
+              <button type="button" class="layout-opt-btn" data-layout="list" title="Show skills line by line as bullet points">📋 List (One by One)</button>
+              <button type="button" class="layout-opt-btn" data-layout="paragraph" title="Show skills as formatted paragraph text">📝 Paragraph</button>
+            </div>
           </div>
-          <div class="skills-container" id="skills-container"></div>
+
+          <!-- Single Skill Input (shown for 'pills' and 'list' layout) -->
+          <div id="skills-single-wrapper">
+            <div class="form-group" style="position:relative;">
+              <label for="skillInput">Add single skills (Enter or comma-separated)</label>
+              <input type="text" id="skillInput" placeholder="e.g. JavaScript, React, Python" autocomplete="off" />
+              <div class="suggestions-dropdown" id="suggestions-dropdown"></div>
+            </div>
+            <div class="skills-container" id="skills-container"></div>
+          </div>
+
+          <!-- Paragraph Input (shown for 'paragraph' layout) -->
+          <div id="skills-para-wrapper" style="display:none;">
+            <div class="form-group">
+              <label for="skillsText">Paragraph / Categorized Skills</label>
+              <textarea id="skillsText" rows="4" placeholder="Frontend: React, Vue, HTML/CSS&#10;Backend: Node.js, Python, SQL&#10;Tools: Docker, AWS, Git" data-field="skillsText"></textarea>
+              <span class="form-hint">Enter skills in paragraph or categorized lines. Lines with categories like 'Frontend:' will auto-format!</span>
+            </div>
+          </div>
         </div>
       </div>
 
