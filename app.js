@@ -751,9 +751,14 @@ function bindThemeToggle() {
   document.getElementById('btn-theme').addEventListener('click', () => {
     resumeDark = !resumeDark;
     const page = document.getElementById('resume-page');
-    const btn = document.getElementById('btn-theme');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeLabel = document.getElementById('theme-label');
     page.classList.toggle('resume-dark', resumeDark);
-    btn.textContent = resumeDark ? '☀️ Light Resume' : '🌙 Dark Resume';
+    if (themeIcon) {
+      themeIcon.setAttribute('data-lucide', resumeDark ? 'sun' : 'moon');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    if (themeLabel) themeLabel.textContent = resumeDark ? 'Light Resume' : 'Dark Resume';
   });
 }
 
@@ -819,11 +824,11 @@ function renderATSResults(score, matched, missing) {
     <div class="ats-label">${label}</div>`;
 
   if (matched.length) {
-    html += `<div class="ats-section-label">✅ Matched Keywords (${matched.length})</div>
+    html += `<div class="ats-section-label"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M20 6 9 17l-5-5"/></svg>Matched Keywords (${matched.length})</div>
       <div class="ats-keywords">${matched.map(k => `<span class="ats-keyword matched">${k}</span>`).join('')}</div>`;
   }
   if (missing.length) {
-    html += `<div class="ats-section-label">❌ Missing Keywords (${missing.length})</div>
+    html += `<div class="ats-section-label"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Missing Keywords (${missing.length})</div>
       <div class="ats-keywords">${missing.slice(0, 30).map(k => `<span class="ats-keyword missing">${k}</span>`).join('')}</div>`;
   }
 
@@ -933,11 +938,11 @@ function toggleMobileView() {
   if (mobileShowPreview) {
     editor.classList.add('hidden');
     preview.classList.add('active');
-    btn.textContent = '✏️ Edit';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg> Edit';
   } else {
     editor.classList.remove('hidden');
     preview.classList.remove('active');
-    btn.textContent = '👁 Preview';
+    btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> Preview';
   }
 }
 

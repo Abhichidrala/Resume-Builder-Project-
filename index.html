@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   </noscript>
   <link rel="stylesheet" href="index.css" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 
 <body>
@@ -39,11 +40,11 @@
           style="background:var(--accent-gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Forge</span></span>
     </div>
     <div class="header-actions">
-      <button class="btn btn-secondary" id="btn-ats" title="ATS Score Checker">📊 ATS Check</button>
-      <button class="btn btn-secondary" id="btn-theme" title="Toggle Resume Theme">🌙 Dark Resume</button>
-      <button class="btn btn-secondary" id="btn-import" title="Import JSON">⬆ Import</button>
-      <button class="btn btn-secondary" id="btn-export" title="Export JSON">⬇ Export</button>
-      <button class="btn btn-primary" id="btn-download" title="Download PDF">🖨 Download PDF</button>
+      <button class="btn btn-secondary" id="btn-ats" title="ATS Score Checker"><i data-lucide="bar-chart-2" class="lucide-btn"></i> ATS Check</button>
+      <button class="btn btn-secondary" id="btn-theme" title="Toggle Resume Theme"><i data-lucide="moon" class="lucide-btn" id="theme-icon"></i> <span id="theme-label">Dark Resume</span></button>
+      <button class="btn btn-secondary" id="btn-import" title="Import JSON"><i data-lucide="upload" class="lucide-btn"></i> Import</button>
+      <button class="btn btn-secondary" id="btn-export" title="Export JSON"><i data-lucide="download" class="lucide-btn"></i> Export</button>
+      <button class="btn btn-primary" id="btn-download" title="Download PDF"><i data-lucide="printer" class="lucide-btn"></i> Download PDF</button>
       <input type="file" id="file-import" class="file-input-hidden" accept=".json" />
     </div>
   </header>
@@ -56,23 +57,23 @@
 
       <!-- Template Selector -->
       <div class="template-selector">
-        <button class="template-btn active" data-template="modern">✦ Modern</button>
-        <button class="template-btn" data-template="classic">◆ Classic</button>
-        <button class="template-btn" data-template="minimal">○ Minimal</button>
-        <button class="template-btn" data-template="executive">■ Executive</button>
-        <button class="template-btn" data-template="elegant">❖ Elegant</button>
-        <button class="template-btn" data-template="creative">✿ Creative</button>
-        <button class="template-btn" data-template="tech">⌘ Tech</button>
-        <button class="template-btn" data-template="compact">▪ Compact</button>
-        <button class="template-btn" data-template="professional">◈ Professional</button>
-        <button class="template-btn" data-template="bold">▌Bold</button>
+        <button class="template-btn active" data-template="modern"><i data-lucide="sparkles" class="lucide-tpl"></i> Modern</button>
+        <button class="template-btn" data-template="classic"><i data-lucide="diamond" class="lucide-tpl"></i> Classic</button>
+        <button class="template-btn" data-template="minimal"><i data-lucide="circle" class="lucide-tpl"></i> Minimal</button>
+        <button class="template-btn" data-template="executive"><i data-lucide="square" class="lucide-tpl"></i> Executive</button>
+        <button class="template-btn" data-template="elegant"><i data-lucide="gem" class="lucide-tpl"></i> Elegant</button>
+        <button class="template-btn" data-template="creative"><i data-lucide="flower-2" class="lucide-tpl"></i> Creative</button>
+        <button class="template-btn" data-template="tech"><i data-lucide="terminal" class="lucide-tpl"></i> Tech</button>
+        <button class="template-btn" data-template="compact"><i data-lucide="minimize-2" class="lucide-tpl"></i> Compact</button>
+        <button class="template-btn" data-template="professional"><i data-lucide="shield" class="lucide-tpl"></i> Professional</button>
+        <button class="template-btn" data-template="bold"><i data-lucide="bold" class="lucide-tpl"></i> Bold</button>
       </div>
 
       <!-- Personal Info -->
       <div class="form-section open" id="sec-personal">
         <div class="section-header" onclick="toggleSection('sec-personal')">
-          <h3><span class="icon">👤</span> Personal Info</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="user" class="lucide-sec"></i></span> Personal Info</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div class="form-group">
@@ -113,8 +114,8 @@
       <!-- Summary -->
       <div class="form-section open" id="sec-summary">
         <div class="section-header" onclick="toggleSection('sec-summary')">
-          <h3><span class="icon">📝</span> Summary</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="file-text" class="lucide-sec"></i></span> Summary</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div class="form-group">
@@ -128,8 +129,8 @@
       <!-- Experience -->
       <div class="form-section open" id="sec-experience">
         <div class="section-header" onclick="toggleSection('sec-experience')">
-          <h3><span class="icon">💼</span> Experience</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="briefcase" class="lucide-sec"></i></span> Experience</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div id="experience-list"></div>
@@ -140,8 +141,8 @@
       <!-- Education -->
       <div class="form-section open" id="sec-education">
         <div class="section-header" onclick="toggleSection('sec-education')">
-          <h3><span class="icon">🎓</span> Education</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="graduation-cap" class="lucide-sec"></i></span> Education</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div id="education-list"></div>
@@ -152,17 +153,17 @@
       <!-- Skills -->
       <div class="form-section open" id="sec-skills">
         <div class="section-header" onclick="toggleSection('sec-skills')">
-          <h3><span class="icon">🛠</span> Skills</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="wrench" class="lucide-sec"></i></span> Skills</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <!-- Skills Layout Choice -->
           <div class="form-group">
             <label>Display Format</label>
             <div class="skills-layout-options">
-              <button type="button" class="layout-opt-btn active" data-layout="pills" title="Show skills as individual tag badges (One by one)">🏷️ Badges (One by One)</button>
-              <button type="button" class="layout-opt-btn" data-layout="list" title="Show skills line by line as bullet points">📋 List (One by One)</button>
-              <button type="button" class="layout-opt-btn" data-layout="paragraph" title="Show skills as formatted paragraph text">📝 Paragraph</button>
+              <button type="button" class="layout-opt-btn active" data-layout="pills" title="Show skills as individual tag badges (One by one)"><i data-lucide="tag" class="lucide-tpl"></i> Badges</button>
+              <button type="button" class="layout-opt-btn" data-layout="list" title="Show skills line by line as bullet points"><i data-lucide="list" class="lucide-tpl"></i> List</button>
+              <button type="button" class="layout-opt-btn" data-layout="paragraph" title="Show skills as formatted paragraph text"><i data-lucide="align-left" class="lucide-tpl"></i> Paragraph</button>
             </div>
           </div>
 
@@ -190,8 +191,8 @@
       <!-- Projects -->
       <div class="form-section" id="sec-projects">
         <div class="section-header" onclick="toggleSection('sec-projects')">
-          <h3><span class="icon">🚀</span> Projects</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="rocket" class="lucide-sec"></i></span> Projects</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div id="projects-list"></div>
@@ -202,8 +203,8 @@
       <!-- Certifications -->
       <div class="form-section" id="sec-certifications">
         <div class="section-header" onclick="toggleSection('sec-certifications')">
-          <h3><span class="icon">🏅</span> Certifications</h3>
-          <span class="section-toggle">▾</span>
+          <h3><span class="icon"><i data-lucide="award" class="lucide-sec"></i></span> Certifications</h3>
+          <span class="section-toggle"><i data-lucide="chevron-down" class="lucide-chev"></i></span>
         </div>
         <div class="section-body">
           <div id="certifications-list"></div>
@@ -223,7 +224,7 @@
   </main>
 
   <!-- Mobile Toggle -->
-  <button class="mobile-toggle" id="mobile-toggle" onclick="toggleMobileView()">👁 Preview</button>
+  <button class="mobile-toggle" id="mobile-toggle" onclick="toggleMobileView()"><i data-lucide="eye" class="lucide-btn"></i> Preview</button>
 
   <!-- Toast -->
   <div class="toast" id="toast"></div>
@@ -232,15 +233,15 @@
   <div class="modal-overlay" id="ats-modal">
     <div class="modal-card">
       <div class="modal-header">
-        <h2>📊 ATS Score Checker</h2>
-        <button class="modal-close" id="ats-close">✕</button>
+        <h2><i data-lucide="bar-chart-2" class="lucide-sec"></i> ATS Score Checker</h2>
+        <button class="modal-close" id="ats-close"><i data-lucide="x" class="lucide-btn"></i></button>
       </div>
       <div class="modal-body">
         <div class="form-group">
           <label>Paste the Job Description</label>
           <textarea id="ats-jd" rows="6" placeholder="Paste the full job description here..."></textarea>
         </div>
-        <button class="btn btn-primary" id="ats-analyze" style="width:100;">🔍 Analyze Match</button>
+        <button class="btn btn-primary" id="ats-analyze" style="width:100;"><i data-lucide="search" class="lucide-btn"></i> Analyze Match</button>
         <div id="ats-results" class="ats-results"></div>
       </div>
     </div>
@@ -277,6 +278,7 @@
   </section>
 
   <script src="app.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', () => { if (typeof lucide !== 'undefined') lucide.createIcons(); });</script>
 </body>
 
 </html>
