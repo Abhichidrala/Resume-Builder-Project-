@@ -151,6 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
   bindFontSizeControl();
   initDragAndDropSections();
 
+  window.addEventListener('load', () => {
+    applyGlobalFontScale();
+    autoFillPage();
+  });
+
   // Recalculate page fill spacing before printing
   window.addEventListener('beforeprint', () => autoFillPage());
 
@@ -534,6 +539,7 @@ function renderPreview() {
 
   // Apply user font scale CSS property
   page.style.setProperty('--user-font-scale', state.userFontScale || 1.0);
+  applyGlobalFontScale();
 
   // Preserve dark mode class if active
   if (resumeDark) page.classList.add('resume-dark');
@@ -857,6 +863,56 @@ function bindHeaderActions() {
 }
 
 // ==================== FONT SIZE STEPPER CONTROL ====================
+let originalFontSizes = null;
+
+function applyGlobalFontScale() {
+  const scale = state.userFontScale || 1.0;
+
+  let styleEl = document.getElementById('font-scale-overrides');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'font-scale-overrides';
+    document.head.appendChild(styleEl);
+  }
+
+  if (!originalFontSizes) {
+    originalFontSizes = [];
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      const sheet = document.styleSheets[i];
+      try {
+        if (sheet.href && !sheet.href.includes('index.css')) continue;
+        const rules = sheet.cssRules || sheet.rules;
+        if (!rules) continue;
+
+        for (let j = 0; j < rules.length; j++) {
+          const rule = rules[j];
+          if (rule.selectorText && rule.selectorText.includes('.resume-page.template-') && rule.style.fontSize) {
+            const origSize = rule.style.fontSize;
+            if (origSize.includes('pt')) {
+              const num = parseFloat(origSize);
+              if (!isNaN(num)) {
+                originalFontSizes.push({
+                  selector: rule.selectorText,
+                  size: num
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // Silent catch for cross-origin sheets
+      }
+    }
+  }
+
+  let overrides = '';
+  originalFontSizes.forEach(item => {
+    const newSize = (item.size * scale).toFixed(2) + 'pt';
+    overrides += `${item.selector} { font-size: ${newSize} !important; }\n`;
+  });
+  styleEl.innerHTML = overrides;
+}
+
 function bindFontSizeControl() {
   const decBtn = document.getElementById('btn-font-dec');
   const incBtn = document.getElementById('btn-font-inc');
