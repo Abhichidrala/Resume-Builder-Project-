@@ -351,6 +351,45 @@ select {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  cursor: grab;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  touch-action: none;
+}
+
+.drag-handle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.form-section.dragging {
+  opacity: 0.45;
+  border: 1px dashed rgba(255, 255, 255, 0.4) !important;
+  transform: scale(0.985);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.form-section.drag-over {
+  border-top: 2px solid #fff !important;
+  box-shadow: 0 -4px 14px rgba(255, 255, 255, 0.15);
+}
+
 .section-header h3 {
   font-size: 0.9rem;
   font-weight: 600;
@@ -631,11 +670,11 @@ select {
   box-shadow: 0 0 60px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.1);
   border-radius: 2px;
   font-family: var(--font-ui);
-  font-size: 9.5pt;
-  line-height: 1.35;
-  padding: 16px 22px;
+  font-size: calc(9.5pt * var(--auto-font-scale, 1));
+  line-height: var(--auto-line-height, 1.35);
+  padding: var(--auto-padding-y, 16px) var(--auto-padding-x, 22px);
   flex-shrink: 0;
-  transition: background 0.4s ease, color 0.4s ease;
+  transition: background 0.4s ease, color 0.4s ease, font-size 0.15s ease, padding 0.15s ease, line-height 0.15s ease;
   display: flex;
   flex-direction: column;
 }
@@ -1667,12 +1706,13 @@ select {
 
 /* Shared resume entry spacing */
 .resume-entry {
-  margin-bottom: 3px;
+  margin-bottom: var(--auto-entry-gap, 3px);
+  transition: margin-bottom 0.15s ease;
 }
 
 .resume-section {
-  margin-bottom: 1px;
-  transition: margin-bottom 0.2s ease;
+  margin-bottom: var(--auto-section-gap, 8px);
+  transition: margin-bottom 0.15s ease;
 }
 
 .resume-summary {

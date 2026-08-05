@@ -30,6 +30,7 @@ const defaultState = {
   template: 'modern',
   skillsLayout: 'pills', // 'pills' (badges), 'list' (bullet lines), or 'paragraph'
   skillsText: '',
+  sectionOrder: ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'],
   fullName: '',
   jobTitle: '',
   email: '',
@@ -74,6 +75,19 @@ function sanitizeState() {
 
   if (!['pills', 'list', 'paragraph'].includes(state.skillsLayout)) {
     state.skillsLayout = 'pills';
+  }
+
+  // Ensure section order array
+  const defaultOrder = ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'];
+  if (!Array.isArray(state.sectionOrder)) {
+    state.sectionOrder = [...defaultOrder];
+  } else {
+    defaultOrder.forEach(key => {
+      if (!state.sectionOrder.includes(key)) {
+        state.sectionOrder.push(key);
+      }
+    });
+    state.sectionOrder = state.sectionOrder.filter(key => defaultOrder.includes(key));
   }
 
   // Ensure array fields
@@ -126,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindATS();
   bindThemeToggle();
   bindAutoSuggestions();
+  initDragAndDropSections();
 
   // Recalculate page fill spacing before printing
   window.addEventListener('beforeprint', () => autoFillPage());
@@ -167,6 +182,17 @@ function hydrateForm() {
   certList.innerHTML = '';
   state.certifications.forEach((_, i) => certList.appendChild(createCertificationItem(i)));
 
+  // Reorder form sections in editor panel based on state.sectionOrder
+  const editorPanel = document.getElementById('editor-panel');
+  if (editorPanel && Array.isArray(state.sectionOrder)) {
+    state.sectionOrder.forEach(secKey => {
+      const secEl = editorPanel.querySelector(`.form-section[data-section-id="${secKey}"]`);
+      if (secEl) {
+        editorPanel.appendChild(secEl);
+      }
+    });
+  }
+
   // Skills tags & layout UI
   updateSkillsLayoutUI();
   renderSkillTags();
@@ -197,8 +223,12 @@ function bindTemplateSelector() {
 }
 
 // ==================== SECTION TOGGLE ====================
-function toggleSection(id) {
-  document.getElementById(id).classList.toggle('open');
+function toggleSection(id, event) {
+  if (event && event.target && event.target.closest('.drag-handle')) {
+    return;
+  }
+  const sec = document.getElementById(id);
+  if (sec) sec.classList.toggle('open');
 }
 
 // ==================== SKILLS ====================
@@ -517,108 +547,121 @@ function renderPreview() {
   // Start content wrapper (fills remaining page space)
   html += '<div class="resume-content">';
 
-  // Summary
-  if (s.summary) {
-    html += `<div class="resume-section">
-      <div class="section-title">Summary</div>
-      <div class="resume-summary">${esc(s.summary)}</div>
-    </div>`;
-  }
-
-  // Experience
-  if (s.experience.length > 0 && s.experience.some(e => e.title || e.company)) {
-    html += `<div class="resume-section"><div class="section-title">Experience</div>`;
-    s.experience.forEach(exp => {
-      if (!exp.title && !exp.company) return;
-      html += `<div class="resume-entry">
-        <div class="entry-header">
-          <div>
-            <div class="entry-title">${esc(exp.title)}</div>
-            <div class="entry-subtitle">${esc(exp.company)}${exp.location ? ', ' + esc(exp.location) : ''}</div>
-          </div>
-          <div class="entry-date">${esc(exp.startDate)}${exp.endDate ? ' – ' + esc(exp.endDate) : ''}</div>
-        </div>
-        ${exp.description ? `<div class="entry-desc">${formatDesc(exp.description)}</div>` : ''}
+  // Renderable content sections map
+  const renderSectionMap = {
+    summary: () => {
+      if (!s.summary) return '';
+      return `<div class="resume-section">
+        <div class="section-title">Summary</div>
+        <div class="resume-summary">${esc(s.summary)}</div>
       </div>`;
-    });
-    html += '</div>';
-  }
-
-  // Education
-  if (s.education.length > 0 && s.education.some(e => e.degree || e.institution)) {
-    html += `<div class="resume-section"><div class="section-title">Education</div>`;
-    s.education.forEach(edu => {
-      if (!edu.degree && !edu.institution) return;
-      html += `<div class="resume-entry">
-        <div class="entry-header">
-          <div>
-            <div class="entry-title">${esc(edu.degree)}</div>
-            <div class="entry-subtitle">${esc(edu.institution)}</div>
+    },
+    experience: () => {
+      if (s.experience.length === 0 || !s.experience.some(e => e.title || e.company)) return '';
+      let res = `<div class="resume-section"><div class="section-title">Experience</div>`;
+      s.experience.forEach(exp => {
+        if (!exp.title && !exp.company) return;
+        res += `<div class="resume-entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">${esc(exp.title)}</div>
+              <div class="entry-subtitle">${esc(exp.company)}${exp.location ? ', ' + esc(exp.location) : ''}</div>
+            </div>
+            <div class="entry-date">${esc(exp.startDate)}${exp.endDate ? ' – ' + esc(exp.endDate) : ''}</div>
           </div>
-          <div class="entry-date">${esc(edu.year)}</div>
-        </div>
-        ${edu.details ? `<div class="entry-desc">${esc(edu.details)}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
+          ${exp.description ? `<div class="entry-desc">${formatDesc(exp.description)}</div>` : ''}
+        </div>`;
+      });
+      res += '</div>';
+      return res;
+    },
+    education: () => {
+      if (s.education.length === 0 || !s.education.some(e => e.degree || e.institution)) return '';
+      let res = `<div class="resume-section"><div class="section-title">Education</div>`;
+      s.education.forEach(edu => {
+        if (!edu.degree && !edu.institution) return;
+        res += `<div class="resume-entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">${esc(edu.degree)}</div>
+              <div class="entry-subtitle">${esc(edu.institution)}</div>
+            </div>
+            <div class="entry-date">${esc(edu.year)}</div>
+          </div>
+          ${edu.details ? `<div class="entry-desc">${esc(edu.details)}</div>` : ''}
+        </div>`;
+      });
+      res += '</div>';
+      return res;
+    },
+    skills: () => {
+      const hasSingleSkills = s.skills.length > 0;
+      const hasParaSkills = s.skillsText && s.skillsText.trim().length > 0;
+      const layout = s.skillsLayout || 'pills';
 
-  // Skills
-  const hasSingleSkills = s.skills.length > 0;
-  const hasParaSkills = s.skillsText && s.skillsText.trim().length > 0;
-  const layout = s.skillsLayout || 'pills';
+      if (!((layout === 'paragraph' && hasParaSkills) || (layout !== 'paragraph' && hasSingleSkills) || hasSingleSkills || hasParaSkills)) {
+        return '';
+      }
 
-  if ((layout === 'paragraph' && hasParaSkills) || (layout !== 'paragraph' && hasSingleSkills) || hasSingleSkills || hasParaSkills) {
-    html += `<div class="resume-section">
-      <div class="section-title">Skills</div>`;
-    
-    if (layout === 'paragraph' && hasParaSkills) {
-      html += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
-    } else if (layout === 'list' && hasSingleSkills) {
-      html += `<ul class="skills-bullet-list">${s.skills.map(sk => `<li>${esc(sk)}</li>`).join('')}</ul>`;
-    } else if (hasSingleSkills) {
-      // Default: 'pills' (one by one as tags/badges)
-      html += `<div class="skills-list">${s.skills.map(sk => `<span class="skill-pill">${esc(sk)}</span>`).join('')}</div>`;
-    } else if (hasParaSkills) {
-      html += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
+      let res = `<div class="resume-section">
+        <div class="section-title">Skills</div>`;
+      
+      if (layout === 'paragraph' && hasParaSkills) {
+        res += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
+      } else if (layout === 'list' && hasSingleSkills) {
+        res += `<ul class="skills-bullet-list">${s.skills.map(sk => `<li>${esc(sk)}</li>`).join('')}</ul>`;
+      } else if (hasSingleSkills) {
+        res += `<div class="skills-list">${s.skills.map(sk => `<span class="skill-pill">${esc(sk)}</span>`).join('')}</div>`;
+      } else if (hasParaSkills) {
+        res += `<div class="skills-paragraph">${formatSkillsParagraph(s.skillsText)}</div>`;
+      }
+
+      res += `</div>`;
+      return res;
+    },
+    projects: () => {
+      if (s.projects.length === 0 || !s.projects.some(p => p.name)) return '';
+      let res = `<div class="resume-section"><div class="section-title">Projects</div>`;
+      s.projects.forEach(proj => {
+        if (!proj.name) return;
+        res += `<div class="resume-entry">
+          <div class="entry-header">
+            <div class="entry-title">${esc(proj.name)}</div>
+            ${proj.link ? `<a href="${esc(proj.link)}" class="entry-date" target="_blank" style="color:#000;text-decoration:none;">${esc(proj.link.replace(/^https?:\/\//, ''))}</a>` : ''}
+          </div>
+          ${proj.description ? `<div class="entry-desc">${esc(proj.description)}</div>` : ''}
+        </div>`;
+      });
+      res += '</div>';
+      return res;
+    },
+    certifications: () => {
+      if (s.certifications.length === 0 || !s.certifications.some(c => c.name)) return '';
+      let res = `<div class="resume-section"><div class="section-title">Certifications</div>`;
+      s.certifications.forEach(cert => {
+        if (!cert.name) return;
+        res += `<div class="resume-entry">
+          <div class="entry-header">
+            <div>
+              <div class="entry-title">${esc(cert.name)}</div>
+              ${cert.issuer ? `<div class="entry-subtitle">${esc(cert.issuer)}</div>` : ''}
+            </div>
+            <div class="entry-date">${esc(cert.date)}</div>
+          </div>
+        </div>`;
+      });
+      res += '</div>';
+      return res;
     }
+  };
 
-    html += `</div>`;
-  }
-
-  // Projects
-  if (s.projects.length > 0 && s.projects.some(p => p.name)) {
-    html += `<div class="resume-section"><div class="section-title">Projects</div>`;
-    s.projects.forEach(proj => {
-      if (!proj.name) return;
-      html += `<div class="resume-entry">
-        <div class="entry-header">
-          <div class="entry-title">${esc(proj.name)}</div>
-          ${proj.link ? `<a href="${esc(proj.link)}" class="entry-date" target="_blank" style="color:#000;text-decoration:none;">${esc(proj.link.replace(/^https?:\/\//, ''))}</a>` : ''}
-        </div>
-        ${proj.description ? `<div class="entry-desc">${esc(proj.description)}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // Certifications
-  if (s.certifications.length > 0 && s.certifications.some(c => c.name)) {
-    html += `<div class="resume-section"><div class="section-title">Certifications</div>`;
-    s.certifications.forEach(cert => {
-      if (!cert.name) return;
-      html += `<div class="resume-entry">
-        <div class="entry-header">
-          <div>
-            <div class="entry-title">${esc(cert.name)}</div>
-            ${cert.issuer ? `<div class="entry-subtitle">${esc(cert.issuer)}</div>` : ''}
-          </div>
-          <div class="entry-date">${esc(cert.date)}</div>
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-  }
+  // Render sections according to state.sectionOrder
+  const order = Array.isArray(s.sectionOrder) && s.sectionOrder.length ? s.sectionOrder : ['summary', 'experience', 'education', 'skills', 'projects', 'certifications'];
+  order.forEach(secKey => {
+    if (renderSectionMap[secKey]) {
+      html += renderSectionMap[secKey]();
+    }
+  });
 
   // Close content wrapper
   html += '</div>';
@@ -629,71 +672,106 @@ function renderPreview() {
   requestAnimationFrame(() => autoFillPage());
 }
 
-// ==================== AUTO-FILL PAGE SPACING ====================
-function autoFillPage() {
+// ==================== INTELLIGENT AUTO-FIT LAYOUT SYSTEM ====================
+function autoFitPage() {
   const page = document.getElementById('resume-page');
   if (!page) return;
 
   const contentWrapper = page.querySelector('.resume-content');
   if (!contentWrapper) return;
 
-  const sections = contentWrapper.querySelectorAll('.resume-section');
+  const sections = Array.from(contentWrapper.querySelectorAll('.resume-section'));
   if (sections.length === 0) return;
 
-  // Reset any previously applied spacing and temporarily disable flex stretch
+  // Reset CSS variables & section margins to baseline before measuring
+  page.style.removeProperty('--auto-font-scale');
+  page.style.removeProperty('--auto-line-height');
+  page.style.removeProperty('--auto-section-gap');
+  page.style.removeProperty('--auto-entry-gap');
+  page.style.removeProperty('--auto-padding-y');
   sections.forEach(sec => { sec.style.marginBottom = ''; });
-  contentWrapper.style.flex = 'none';
 
-  // Force reflow
+  // Force reflow for accurate measurement
   void page.offsetHeight;
 
-  // Get the page's padding
+  // Determine target A4 page height (~297mm ≈ 1122px)
   const pageStyle = getComputedStyle(page);
-  const paddingTop = parseFloat(pageStyle.paddingTop) || 0;
-  const paddingBottom = parseFloat(pageStyle.paddingBottom) || 0;
-
-  // The page's target height: use min-height from CSS (297mm → ~1122px)
-  // Fall back to offsetHeight if min-height isn't resolved properly
   let targetHeight = parseFloat(pageStyle.minHeight) || 0;
-  if (targetHeight <= 0) targetHeight = page.offsetHeight;
-  const usableHeight = targetHeight - paddingTop - paddingBottom;
+  if (targetHeight <= 0) targetHeight = page.offsetHeight || 1122;
 
-  if (usableHeight <= 0) {
-    contentWrapper.style.flex = '';
+  let currentHeight = page.scrollHeight;
+
+  // CASE 1: LONG CONTENT / OVERFLOW
+  // If content exceeds 1 page height, incrementally tighten typography & spacing within ATS limits
+  if (currentHeight > targetHeight + 2) {
+    let fontScale = 1.0;
+    let lineHeight = 1.35;
+    let sectionGap = 8;
+    let entryGap = 3;
+    let paddingY = 16;
+
+    for (let step = 0; step < 16; step++) {
+      if (page.scrollHeight <= targetHeight + 1) break;
+
+      if (sectionGap > 2) sectionGap -= 0.5;
+      if (entryGap > 1) entryGap -= 0.2;
+      if (paddingY > 10) paddingY -= 0.5;
+      if (lineHeight > 1.20) lineHeight -= 0.012;
+      if (fontScale > 0.85) fontScale -= 0.012;
+
+      page.style.setProperty('--auto-font-scale', fontScale.toFixed(3));
+      page.style.setProperty('--auto-line-height', lineHeight.toFixed(3));
+      page.style.setProperty('--auto-section-gap', `${sectionGap.toFixed(1)}px`);
+      page.style.setProperty('--auto-entry-gap', `${entryGap.toFixed(1)}px`);
+      page.style.setProperty('--auto-padding-y', `${paddingY.toFixed(1)}px`);
+
+      void page.offsetHeight;
+    }
     return;
   }
 
-  // Measure header height
-  const header = page.querySelector('.resume-header');
-  const headerHeight = header ? header.offsetHeight : 0;
-  const headerMargin = header ? (parseFloat(getComputedStyle(header).marginBottom) || 0) : 0;
+  // CASE 2: SHORT / SPARSE CONTENT
+  // If content leaves significant empty space at the bottom, scale up typography & spacing
+  const remainingSpace = targetHeight - currentHeight;
+  if (remainingSpace > 25) {
+    const spaceRatio = Math.min(remainingSpace / targetHeight, 0.45);
 
-  // Measure total height of all sections (natural, without flex stretch)
-  let sectionsHeight = 0;
-  sections.forEach(sec => {
-    sectionsHeight += sec.offsetHeight;
-    const style = getComputedStyle(sec);
-    sectionsHeight += (parseFloat(style.marginTop) || 0) + (parseFloat(style.marginBottom) || 0);
-  });
+    const fontScale = Math.min(1.14, 1.0 + spaceRatio * 0.28);
+    const lineHeight = Math.min(1.48, 1.35 + spaceRatio * 0.28);
+    const paddingY = Math.min(24, 16 + spaceRatio * 18);
+    const entryGap = Math.min(7, 3 + spaceRatio * 10);
+    const sectionGap = Math.min(20, 8 + spaceRatio * 24);
 
-  const totalUsed = headerHeight + headerMargin + sectionsHeight;
-  const remainingSpace = usableHeight - totalUsed;
+    page.style.setProperty('--auto-font-scale', fontScale.toFixed(3));
+    page.style.setProperty('--auto-line-height', lineHeight.toFixed(3));
+    page.style.setProperty('--auto-padding-y', `${paddingY.toFixed(1)}px`);
+    page.style.setProperty('--auto-entry-gap', `${entryGap.toFixed(1)}px`);
+    page.style.setProperty('--auto-section-gap', `${sectionGap.toFixed(1)}px`);
 
-  // Restore flex stretch
-  contentWrapper.style.flex = '';
+    void page.offsetHeight;
 
-  // Only distribute if there's meaningful remaining space (>30px)
-  if (remainingSpace > 30) {
-    // Distribute evenly between sections as extra bottom margin
-    const extraPerSection = Math.floor(remainingSpace / sections.length);
-    // Cap at 200px max per gap so it still looks like a real resume
-    const cappedExtra = Math.min(extraPerSection, 200);
-
-    sections.forEach(sec => {
-      const currentMargin = parseFloat(getComputedStyle(sec).marginBottom) || 0;
-      sec.style.marginBottom = (currentMargin + cappedExtra) + 'px';
-    });
+    // Distribute any extra remaining space evenly between sections
+    const extraSpace = targetHeight - page.scrollHeight;
+    if (extraSpace > 10 && sections.length > 0) {
+      const extraPerSection = Math.floor(extraSpace / sections.length);
+      const finalSectionGap = Math.min(36, sectionGap + extraPerSection);
+      sections.forEach(sec => {
+        sec.style.marginBottom = `${finalSectionGap}px`;
+      });
+    }
+    return;
   }
+
+  // CASE 3: BALANCED CONTENT
+  page.style.setProperty('--auto-font-scale', '1.0');
+  page.style.setProperty('--auto-line-height', '1.35');
+  page.style.setProperty('--auto-section-gap', '8px');
+  page.style.setProperty('--auto-entry-gap', '3px');
+  page.style.setProperty('--auto-padding-y', '16px');
+}
+
+function autoFillPage() {
+  autoFitPage();
 }
 
 // ==================== HEADER ACTION BUTTONS ====================
@@ -926,6 +1004,120 @@ function addSkillFromInput(input) {
   saveState();
   renderSkillTags();
   renderPreview();
+}
+
+// ==================== DRAG & DROP SECTION REORDERING ====================
+function initDragAndDropSections() {
+  const editorPanel = document.getElementById('editor-panel');
+  if (!editorPanel) return;
+
+  const sections = Array.from(editorPanel.querySelectorAll('.form-section[data-section-id]'));
+
+  sections.forEach(sec => {
+    sec.setAttribute('draggable', 'true');
+
+    // Desktop HTML5 Drag & Drop
+    sec.addEventListener('dragstart', (e) => {
+      sec.classList.add('dragging');
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', sec.dataset.sectionId);
+      }
+    });
+
+    sec.addEventListener('dragend', () => {
+      sec.classList.remove('dragging');
+      editorPanel.querySelectorAll('.form-section').forEach(s => s.classList.remove('drag-over'));
+      updateSectionOrderFromDOM();
+    });
+
+    sec.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      const draggingSec = editorPanel.querySelector('.form-section.dragging');
+      if (draggingSec && draggingSec !== sec) {
+        const rect = sec.getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+        if (e.clientY < midpoint) {
+          editorPanel.insertBefore(draggingSec, sec);
+        } else {
+          editorPanel.insertBefore(draggingSec, sec.nextSibling);
+        }
+      }
+    });
+
+    sec.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      if (!sec.classList.contains('dragging')) {
+        sec.classList.add('drag-over');
+      }
+    });
+
+    sec.addEventListener('dragleave', () => {
+      sec.classList.remove('drag-over');
+    });
+
+    // Mobile Touch Drag Support
+    const handle = sec.querySelector('.drag-handle');
+    if (handle) {
+      let activeSec = null;
+
+      handle.addEventListener('touchstart', (e) => {
+        activeSec = sec;
+        activeSec.classList.add('dragging');
+      }, { passive: true });
+
+      handle.addEventListener('touchmove', (e) => {
+        if (!activeSec) return;
+        const touch = e.touches[0];
+        const currentY = touch.clientY;
+
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (targetEl) {
+          const targetSec = targetEl.closest('.form-section[data-section-id]');
+          if (targetSec && targetSec !== activeSec) {
+            const rect = targetSec.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            if (currentY < midpoint) {
+              editorPanel.insertBefore(activeSec, targetSec);
+            } else {
+              editorPanel.insertBefore(activeSec, targetSec.nextSibling);
+            }
+          }
+        }
+      }, { passive: true });
+
+      handle.addEventListener('touchend', () => {
+        if (activeSec) {
+          activeSec.classList.remove('dragging');
+          activeSec = null;
+          updateSectionOrderFromDOM();
+        }
+      });
+
+      handle.addEventListener('touchcancel', () => {
+        if (activeSec) {
+          activeSec.classList.remove('dragging');
+          activeSec = null;
+          updateSectionOrderFromDOM();
+        }
+      });
+    }
+  });
+}
+
+function updateSectionOrderFromDOM() {
+  const editorPanel = document.getElementById('editor-panel');
+  if (!editorPanel) return;
+
+  const currentSections = Array.from(editorPanel.querySelectorAll('.form-section[data-section-id]'));
+  const newOrder = currentSections.map(sec => sec.dataset.sectionId).filter(Boolean);
+
+  if (newOrder.length > 0) {
+    state.sectionOrder = newOrder;
+    saveState();
+    renderPreview();
+  }
 }
 
 // ==================== MOBILE TOGGLE ====================
